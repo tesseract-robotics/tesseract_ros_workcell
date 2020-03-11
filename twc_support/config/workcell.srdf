@@ -1,0 +1,254 @@
+<?xml version="1.0" ?>
+<!--This does not replace URDF, and is not an extension of URDF.
+    This is a format for representing semantic information about the robot structure.
+    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
+-->
+<robot name="tesseract_workcell">
+    <!--GROUPS: Representation of a set of joints and links. This can be useful for specifying DOF to plan for, defining arms, end effectors, etc-->
+    <!--LINKS: When a link is specified, the parent joint of that link (if it exists) is automatically included-->
+    <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
+    <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
+    <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
+
+    <group name="pushcorp_only">
+        <chain base_link="ati_f_base_link" tip_link="st_tool0" />
+    </group>
+
+    <group name="positioner_only">
+        <chain base_link="positioner_base_link" tip_link="positioner_tool0" />
+    </group>
+
+    <group name="robot_only">
+        <chain base_link="robot_base_link" tip_link="robot_tool0" />
+    </group>
+
+    <group name="robot_pushcorp">
+        <chain base_link="robot_base_link" tip_link="ati_m_tool0" />
+        <chain base_link="ati_f_base_link" tip_link="st_tool0" />
+    </group>
+
+    <disable_collisions link1="ati_f_base_link" link2="fence_panel1_base_link" reason="Adjacent" />
+    <disable_collisions link1="ati_f_base_link" link2="fence_panel2_base_link" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="fence_panel3_base_link" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="fence_panel4_base_link" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="fence_panel5_base_link" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="fence_panel6_base_link" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="logo_base_link" reason="Never" />
+<!--    <disable_collisions link1="ati_f_base_link" link2="part_link" reason="Never" />-->
+    <disable_collisions link1="ati_f_base_link" link2="positioner_base_link" reason="Adjacent" />
+    <disable_collisions link1="ati_f_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="pushcorp_afd_link_1" reason="Adjacent" />
+    <disable_collisions link1="ati_f_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="robot_base_link" reason="Adjacent" />
+    <disable_collisions link1="ati_f_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="fence_panel4_base_link" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="fence_panel6_base_link" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="robot_link_6" reason="Adjacent" />
+    <disable_collisions link1="fence_panel1_base_link" link2="fence_panel2_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel1_base_link" link2="fence_panel3_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel1_base_link" link2="fence_panel4_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="fence_panel5_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="fence_panel6_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="logo_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel1_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="positioner_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel1_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="robot_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel1_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel1_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="fence_panel3_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="fence_panel4_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel2_base_link" link2="fence_panel5_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="fence_panel6_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="logo_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="positioner_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_link_4" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="fence_panel2_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="fence_panel4_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="fence_panel5_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel3_base_link" link2="fence_panel6_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="logo_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="positioner_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel3_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="fence_panel5_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="fence_panel6_base_link" reason="Adjacent" />
+    <disable_collisions link1="fence_panel4_base_link" link2="logo_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="positioner_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_link_4" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="fence_panel4_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="fence_panel6_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="logo_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="positioner_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel5_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="logo_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="positioner_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_link_4" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="fence_panel6_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="part_link" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="positioner_base_link" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="positioner_link_1" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="logo_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="part_link" link2="positioner_link_3" reason="Adjacent" />
+    <!--<disable_collisions link1="part_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="part_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="part_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />-->
+    <disable_collisions link1="part_link" link2="robot_base_link" reason="Never" />
+    <!--<disable_collisions link1="part_link" link2="robot_link_1" reason="Never" />-->
+    <disable_collisions link1="part_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="positioner_link_1" reason="Adjacent" />
+    <disable_collisions link1="positioner_base_link" link2="positioner_link_2" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="robot_base_link" reason="Adjacent" />
+    <disable_collisions link1="positioner_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="positioner_link_2" reason="Adjacent" />
+    <disable_collisions link1="positioner_link_1" link2="positioner_link_3" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="positioner_link_3" reason="Adjacent" />
+    <disable_collisions link1="positioner_link_2" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_3" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="positioner_link_3" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="positioner_link_3" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_3" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="positioner_link_3" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="positioner_link_3" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="pushcorp_afd_link_2" reason="Adjacent" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="pushcorp_stc_parallel_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_2" link2="pushcorp_stc_parallel_base_link" reason="Adjacent" />
+    <disable_collisions link1="pushcorp_afd_link_2" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_2" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_2" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_stc_parallel_base_link" link2="robot_base_link" reason="Never" />
+    <disable_collisions link1="pushcorp_stc_parallel_base_link" link2="robot_link_1" reason="Never" />
+    <disable_collisions link1="pushcorp_stc_parallel_base_link" link2="st_base_link" reason="Adjacent" />
+    <disable_collisions link1="robot_base_link" link2="robot_link_1" reason="Adjacent" />
+    <disable_collisions link1="robot_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="robot_base_link" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="robot_link_1" link2="robot_link_2" reason="Adjacent" />
+    <disable_collisions link1="robot_link_1" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="robot_link_1" link2="st_base_link" reason="Never" />
+    <disable_collisions link1="robot_link_2" link2="robot_link_3" reason="Adjacent" />
+    <disable_collisions link1="robot_link_2" link2="robot_link_4" reason="Never" />
+    <disable_collisions link1="robot_link_2" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="robot_link_2" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="robot_link_3" link2="robot_link_4" reason="Adjacent" />
+    <disable_collisions link1="robot_link_3" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="robot_link_3" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="robot_link_4" link2="robot_link_5" reason="Adjacent" />
+    <disable_collisions link1="robot_link_4" link2="robot_link_6" reason="Default" />
+    <disable_collisions link1="robot_link_5" link2="robot_link_6" reason="Adjacent" />
+
+    <disable_collisions link1="ati_f_base_link" link2="robot_link_2" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="robot_link_3" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="ati_m_base_link" reason="Adjacent" />
+    <disable_collisions link1="ati_m_base_link" link2="pushcorp_afd_link_1" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="robot_link_6" reason="Never" />
+    <disable_collisions link1="pushcorp_afd_link_1" link2="robot_link_5" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="robot_link_4" reason="Never" />
+    <disable_collisions link1="ati_m_base_link" link2="pushcorp_afd_link_2" reason="Never" />
+    <disable_collisions link1="ati_f_base_link" link2="robot_link_4" reason="Never" />
+
+
+</robot>

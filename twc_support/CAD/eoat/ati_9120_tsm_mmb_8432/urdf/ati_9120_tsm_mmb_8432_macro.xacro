@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="ati_9120_tsm_mmb_8432" params="prefix">
+    <!-- link list -->
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/ati_9120_tsm_mmb_8432/urdf/visual/base_link.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/ati_9120_tsm_mmb_8432/urdf/visual/base_link.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}tool0"/>
+    <!-- end of link list -->
+
+    <!-- joint list -->
+    <joint name="${prefix}base_link_tool0" type="fixed">
+      <origin xyz="0 0.05398 0.01524" rpy="0 0 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}tool0" />
+    </joint>
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

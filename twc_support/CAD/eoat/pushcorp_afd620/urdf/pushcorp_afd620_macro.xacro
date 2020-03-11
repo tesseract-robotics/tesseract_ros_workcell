@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="pushcorp_afd620" params="prefix">
+    <!-- link list -->
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/pushcorp_afd620/urdf/visual/base_link.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/pushcorp_afd620/urdf/visual/base_link.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}link_1">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/pushcorp_afd620/urdf/visual/link_1.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/pushcorp_afd620/urdf/visual/link_1.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}tool0"/>
+    <!-- end of link list -->
+
+    <!-- joint list -->
+    <joint name="${prefix}joint_1" type="prismatic">
+      <origin xyz="0 0 0.08471" rpy="0 0 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}link_1" />
+      <axis xyz="1 0 0" />
+      <limit lower="-0.0254" upper="0.0254" effort="0" velocity="1.4834" />
+    </joint>
+    <joint name="${prefix}joint_1_tool0" type="fixed">
+      <origin xyz="0 0 0.03747" rpy="0 0 0" />
+      <parent link="${prefix}link_1" />
+      <child link="${prefix}tool0" />
+    </joint>
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

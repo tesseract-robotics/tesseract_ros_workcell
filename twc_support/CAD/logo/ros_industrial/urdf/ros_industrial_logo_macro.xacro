@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="ros_industrial_logo" params="prefix">
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="-0.125 -0.05 0.01" rpy="0 0 0" />
+        <geometry>
+          <box size="1.25 0.6 0.02" />
+        </geometry>
+        <material name="WhiteLogo">
+          <color rgba="1.0 1.0 1.0 1.0"/>
+        </material>
+      </visual>
+      <visual>
+        <origin xyz="0 0 0.02" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/logo/ros_industrial/urdf/visual/ros_industrial_logo.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="1 1 0.03" />
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+</robot>

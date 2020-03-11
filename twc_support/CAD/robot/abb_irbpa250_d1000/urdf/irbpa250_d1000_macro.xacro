@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="abb_irbpa250_d1000" params="prefix">
+    <!-- link list -->
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/robot/abb_irbpa250_d1000/urdf/visual/base_link.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/robot/abb_irbpa250_d1000/urdf/visual/base_link.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}link_1">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/robot/abb_irbpa250_d1000/urdf/visual/link_1.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/robot/abb_irbpa250_d1000/urdf/visual/link_1.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}link_2">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/robot/abb_irbpa250_d1000/urdf/visual/link_2.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/robot/abb_irbpa250_d1000/urdf/visual/link_2.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}tool0"/>
+    <!-- end of link list -->
+
+    <!-- joint list -->
+    <joint name="${prefix}base_joint" type="revolute">
+      <origin xyz="0.733 0 1.020" rpy="0 0 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}link_1" />
+      <axis xyz="1 0 0" />
+      <limit lower="-6.28319" upper="6.28319" effort="0" velocity="1.4834" />
+    </joint>
+    <joint name="${prefix}joint_1" type="revolute">
+      <origin xyz="-0.733 0 0" rpy="0 0 0" />
+      <parent link="${prefix}link_1" />
+      <child link="${prefix}link_2" />
+      <axis xyz="0 0 1" />
+      <limit lower="-6.28319" upper="6.28319" effort="0" velocity="1.4834" />
+    </joint>
+    <joint name="${prefix}joint_2_tool0" type="fixed">
+      <origin xyz="0 0 0.10487" rpy="0 0 0" />
+      <parent link="${prefix}link_2" />
+      <child link="${prefix}tool0" />
+    </joint>
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

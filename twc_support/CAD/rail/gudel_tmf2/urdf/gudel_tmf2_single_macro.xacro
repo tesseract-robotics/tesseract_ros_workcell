@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="gudel_tmf2_single" params="prefix">
+    <!-- link list -->
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}link_1">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/link_1.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/link_1.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}tool0"/>
+    <!-- end of link list -->
+
+    <!-- joint list -->
+    <joint name="${prefix}joint_1" type="prismatic">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}link_1" />
+      <axis xyz="0 1 0" />
+      <limit lower="0" upper="10" effort="0" velocity="2.5" />
+    </joint>
+    <joint name="${prefix}joint_1_tool0" type="fixed">
+      <origin xyz="0 0.125 0.340" rpy="0 0 0" />
+      <parent link="${prefix}link_1" />
+      <child link="${prefix}tool0" />
+    </joint>
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

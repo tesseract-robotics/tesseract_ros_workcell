@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>twc_application</name>
+  <version>0.1.0</version>
+  <description>This is the application package for the example tesseract industrial workcell example.</description>
+
+  <maintainer email="levi.armstrong@swri.org">Levi Armstrong</maintainer>
+  <license>Apache 2.0</license>
+  <author >Levi Armstrong</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>twc_motion_planning</depend>
+  <depend>twc_msgs</depend>
+  <depend>tesseract_msgs</depend>
+  <depend>actionlib</depend>
+  <depend>tesseract_rosutils</depend>
+
+  <export>
+  </export>
+</package>

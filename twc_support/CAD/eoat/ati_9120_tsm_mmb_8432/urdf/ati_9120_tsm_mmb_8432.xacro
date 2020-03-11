@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<robot name="ati_9120_tsm_mmb_8432" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:include filename="$(find twc_support)/CAD/eoat/ati_9120_tsm_mmb_8432/urdf/ati_9120_tsm_mmb_8432_macro.xacro"/>
+  <xacro:ati_9120_tsm_mmb_8432 prefix=""/>
+</robot>

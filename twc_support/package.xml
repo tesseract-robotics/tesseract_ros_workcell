@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>twc_support</name>
+  <version>0.1.0</version>
+  <description>This is the support package for the example tesseract industrial workcell example.</description>
+
+  <maintainer email="levi.armstrong@swri.org">Levi Armstrong</maintainer>
+  <license>Apache 2.0</license>
+  <author >Levi Armstrong</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>

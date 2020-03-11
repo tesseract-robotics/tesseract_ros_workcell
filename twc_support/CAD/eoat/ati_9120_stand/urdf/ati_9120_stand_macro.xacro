@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="ati_9120_stand" params="prefix">
+    <!-- link list -->
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/ati_9120_stand/urdf/visual/base_link.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/CAD/eoat/ati_9120_stand/urdf/visual/base_link.dae" />
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}tool0"/>
+    <link name="${prefix}tool1"/>
+    <!-- end of link list -->
+
+    <!-- joint list -->
+    <joint name="${prefix}base_link_tool0" type="fixed">
+      <origin xyz="0.150 0.275 1.2" rpy="0 1.5708 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}tool0" />
+    </joint>
+    <joint name="${prefix}base_link_tool1" type="fixed">
+      <origin xyz="0.150 -0.275 1.2" rpy="0 1.5708 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}tool1" />
+    </joint>
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>twc_motion_planning</name>
+  <version>0.1.0</version>
+  <description>This is the motion planning package for the example tesseract industrial workcell example.</description>
+
+  <maintainer email="levi.armstrong@swri.org">Levi Armstrong</maintainer>
+  <license>Apache 2.0</license>
+  <author >Levi Armstrong</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>descartes_light</depend>
+  <depend>opw_kinematics</depend>
+  <depend>tesseract</depend>
+  <depend>tesseract_kinematics</depend>
+  <depend>tesseract_motion_planners</depend>
+  <depend>tesseract_process_planners</depend>
+  <depend>eigen_conversions</depend>
+  <depend>tesseract_rosutils</depend>
+  <depend>tesseract_monitoring</depend>
+  <depend>twc_msgs</depend>
+
+  <export>
+  </export>
+</package>
