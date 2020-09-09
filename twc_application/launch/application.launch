@@ -5,10 +5,49 @@
   <arg name="planning" default="0" />
   <arg name="application" default="0" />
 
+  <!-- Tesseract Monitor Parameters -->
+  <arg name="robot_description" default="robot_description"/>
+  <arg name="descrete_plugin" default="BulletDiscreteBVHManager"/>
+  <arg name="continuous_plugin" default="BulletCastBVHManager"/>
+  <arg name="joint_state_topic" default=""/>
+  <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
+
+  <!-- Launch URDF and SRDF -->
   <include file="$(find twc_support)/launch/load_workcell.launch" />
 
+  <!-- Launch Tesseract Monitor -->
+  <node pkg="tesseract_monitoring" type="tesseract_monitoring_environment_node" name="tesseract_environment_monitor">
+    <param name="robot_description" type="string" value="$(arg robot_description)"/>
+    <param name="descrete_plugin" type="string" value="$(arg descrete_plugin)"/>
+    <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
+    <param name="joint_state_topic" type="string" value="$(arg joint_state_topic)"/>
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)"/>
+    <param name="publish_environment" type="bool" value="true"/>
+  </node>
+
+  <!-- Launch Tesseract Planning Server -->
+  <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
+  <node pkg="tesseract_planning_server" type="tesseract_planning_server_node" name="tesseract_planning_server">
+    <param name="robot_description" type="string" value="$(arg robot_description)"/>
+    <param name="descrete_plugin" type="string" value="$(arg descrete_plugin)"/>
+    <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
+    <param name="monitor_namespace" type="string" value="tesseract_workcell_planning_server"/>
+    <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
+  </node>
+
+  <!-- Launch Tesseract Contact Monitor -->
+  <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
+  <node name="tesseract_contact_monitoring" pkg="tesseract_monitoring" type="tesseract_monitoring_contacts_node" required="true">
+    <param name="monitor_namespace" type="string" value="tesseract_workcell_contact_monitor"/>
+    <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
+    <param name="publish_markers" value="true"/>
+    <param name="publish_environment" value="true"/>
+  </node>
+
+  <!-- Launch RViz -->
   <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
-  <node if="$(arg planning)" name="planning_manager_node" pkg="twc_motion_planning" type="planning_manager_node" required="true"/>
+
+  <!-- Launch Application Node -->
   <node if="$(arg application)" name="application_node" pkg="twc_application" type="application_node" required="true">
     <param name="tool_path" type="str" value="$(find twc_application)/config/job_path.yaml"/>
   </node>
@@ -16,7 +55,4 @@
   <!-- Launch GUI to drive joints   -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
-  <node name="tesseract_contact_monitoring" pkg="tesseract_monitoring" type="tesseract_monitoring_contacts_node" required="true">
-    <param name="publish_markers" value="true"/>
-  </node>
 </launch>

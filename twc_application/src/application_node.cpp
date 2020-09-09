@@ -1,16 +1,23 @@
 #include <ros/ros.h>
-#include <twc_motion_planning/planning_manager.h>
-#include <twc_msgs/ProcessJobAction.h>
+#include <ros/package.h>
 #include <geometry_msgs/PoseArray.h>
-#include <tesseract_msgs/Trajectory.h>
+#include <tesseract_msgs/GetMotionPlanAction.h>
 #include <actionlib/client/simple_action_client.h>
 #include <tesseract_rosutils/conversions.h>
+#include <tesseract_command_language/command_language.h>
+#include <tesseract_command_language/serialize.h>
+#include <tesseract_command_language/deserialize.h>
+#include <tesseract_visualization/visualization_loader.h>
+#include <tesseract_monitoring/tesseract_monitor_interface.h>
+#include <tesseract_environment/ofkt/ofkt_state_solver.h>
 
 #include <yaml-cpp/yaml.h>
 #include <yaml-cpp/node/iterator.h>
 #include <yaml-cpp/node/impl.h>
 
 #include <tf2_eigen/tf2_eigen.h>
+
+using namespace tesseract_planning;
 
 static const std::string TOOLPATH = "twc_toolpath";
 static const std::vector<std::string> HOME_JOINTS = { "positioner_joint_1", "positioner_joint_2", "robot_joint_1",
@@ -21,28 +28,24 @@ static const std::vector<double> HOME_POSITION = { 0, 0, 0, -0.349066, 0.349066,
 ///
 /// \brief parsePathFromFile Creates a collection of raster strips from a yaml file
 /// \param yaml_filepath
-/// \param waypoint_origin_frame
 /// \return success
 ///
-bool parsePathFromFile(std::vector<geometry_msgs::PoseArray>& raster_strips,
-                       const std::string& yaml_filepath,
-                       const std::string& waypoint_origin_frame)
+bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raster_strips,
+                       const std::string& yaml_filepath)
 {
-  std::vector<geometry_msgs::PoseArray> temp_raster_strips;
   YAML::Node full_yaml_node = YAML::LoadFile(yaml_filepath);
   YAML::Node paths = full_yaml_node[0]["paths"];
   std::double_t offset_strip = 0.0;
   for (YAML::const_iterator path_it = paths.begin(); path_it != paths.end(); ++path_it)
   {
-    std::vector<geometry_msgs::PoseStamped> temp_poses;
-    geometry_msgs::PoseArray curr_pose_array;
+    std::vector<Eigen::Isometry3d> temp_poses;
     YAML::Node strip = (*path_it)["poses"];
     for (YAML::const_iterator pose_it = strip.begin(); pose_it != strip.end(); ++pose_it)
     {
       const YAML::Node& pose = *pose_it;
       try
       {
-        geometry_msgs::PoseStamped current_pose;
+        Eigen::Isometry3d current_pose;
 
         float x = pose["position"]["x"].as<float>();
         float y = pose["position"]["y"].as<float>();
@@ -53,41 +56,88 @@ bool parsePathFromFile(std::vector<geometry_msgs::PoseArray>& raster_strips,
         float qz = pose["orientation"]["z"].as<float>();
         float qw = pose["orientation"]["w"].as<float>();
 
-        current_pose.pose.position.x = x;
-        current_pose.pose.position.y = y;
-        current_pose.pose.position.z = z;
-
-        current_pose.pose.orientation.x = qx;
-        current_pose.pose.orientation.y = qy;
-        current_pose.pose.orientation.z = qz;
-        current_pose.pose.orientation.w = qw;
-
-        current_pose.header.frame_id = waypoint_origin_frame;
-
-        std::double_t offset_waypoint = offset_strip;
-
-        Eigen::Isometry3d original_pose;
-        tf2::fromMsg(current_pose.pose, original_pose);
+        current_pose.translation() = Eigen::Vector3d(x, y, z);
+        current_pose.linear() = Eigen::Quaterniond(qw, qx, qy, qz).toRotationMatrix();
 
         Eigen::Isometry3d offset_pose =
-            original_pose * Eigen::Translation3d(0.0, 0.0, offset_waypoint) * Eigen::Quaterniond(0, 1, 0, 0);
+            current_pose * Eigen::Translation3d(0.0, 0.0, offset_strip) * Eigen::Quaterniond(0, 1, 0, 0);
 
-        current_pose.pose = tf2::toMsg(offset_pose);
-        curr_pose_array.poses.push_back(current_pose.pose);
-        curr_pose_array.header = current_pose.header;
-
-        temp_poses.push_back(current_pose);
+        temp_poses.push_back(offset_pose);
       }
       catch (YAML::InvalidNode& e)
       {
         continue;
       }
     }
-    temp_raster_strips.push_back(curr_pose_array);
+    raster_strips.push_back(temp_poses);
   }
-  raster_strips.reserve(temp_raster_strips.size());
-  raster_strips = temp_raster_strips;
   return true;
+}
+
+CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry3d>>& raster_strips)
+{
+  CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator"));
+
+  // Start Joint Position for the program
+  std::vector<std::string> joint_names = { "robot_joint_1", "robot_joint_2", "robot_joint_3",
+                                           "robot_joint_4", "robot_joint_5", "robot_joint_6" };
+  StateWaypoint swp1 = StateWaypoint(joint_names, Eigen::VectorXd::Zero(6));
+  PlanInstruction start_instruction(swp1, PlanInstructionType::START);
+  program.setStartInstruction(start_instruction);
+
+  for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
+  {
+    if (rs == 0)
+    {
+      // Define from start composite instruction
+      CartesianWaypoint wp1 = raster_strips[rs][0];
+      PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, "freespace_profile");
+      plan_f0.setDescription("from_start_plan");
+      CompositeInstruction from_start;
+      from_start.setDescription("from_start");
+      from_start.push_back(plan_f0);
+      program.push_back(from_start);
+    }
+
+    // Define raster
+    CompositeInstruction raster_segment;
+    raster_segment.setDescription("Raster #" + std::to_string(rs + 1));
+
+    for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
+    {
+      CartesianWaypoint wp = raster_strips[rs][i];
+      raster_segment.push_back(PlanInstruction(wp, PlanInstructionType::LINEAR, "RASTER"));
+    }
+    program.push_back(raster_segment);
+
+
+    if (rs < raster_strips.size() - 1)
+    {
+      // Add transition
+      CartesianWaypoint twp = raster_strips[rs + 1].front();
+
+      PlanInstruction tranisiton_instruction1(twp, PlanInstructionType::FREESPACE, "freespace_profile");
+      tranisiton_instruction1.setDescription("transition_from_end_plan");
+
+      CompositeInstruction transition;
+      transition.setDescription("transition_from_end");
+      transition.push_back(tranisiton_instruction1);
+
+      program.push_back(transition);
+    }
+    else
+    {
+      // Add to end instruction
+      PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, "freespace_profile");
+      plan_f2.setDescription("to_end_plan");
+      CompositeInstruction to_end;
+      to_end.setDescription("to_end");
+      to_end.push_back(plan_f2);
+      program.push_back(to_end);
+    }
+  }
+
+  return program;
 }
 
 int main(int argc, char** argv)
@@ -95,66 +145,46 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "application_node");
   ros::NodeHandle nh, pnh("~");
 
-  std::string tool_path = "/home/larmstrong/catkin_ws/trajopt_only_ws/src/tesseract-1/tesseract_ros/tesseract_examples/"
-                          "tesseract_ros_workcell/twc_application/config/job_path.yaml";
+  std::string tool_path = ros::package::getPath("twc_application") + "/config/job_path.yaml";
   pnh.param<std::string>("tool_path", tool_path);
   ROS_INFO("Using tool path file: %s", tool_path.c_str());
 
-  // Trajectory publisher
-  ros::Publisher trajectory_pub =
-      nh.advertise<tesseract_msgs::Trajectory>("/twc_motion_planning/process_trajectory", 1, true);
+//  // Trajectory publisher
+//  ros::Publisher trajectory_pub =
+//      nh.advertise<tesseract_msgs::Trajectory>("/twc_motion_planning/process_trajectory", 1, true);
+
+  // Create a tesseract interface
+  tesseract_monitoring::TesseractMonitorInterface interface;
+  tesseract::Tesseract::Ptr thor = interface.getTesseract<tesseract_environment::OFKTStateSolver>("tesseract_workcell_environment");
+
+  // Dynamically load ignition visualizer if exist
+  tesseract_visualization::VisualizationLoader loader;
+  auto plotter = loader.get();
+
+  if (plotter != nullptr && thor != nullptr)
+  {
+    plotter->init(thor);
+    plotter->waitForConnection();
+    plotter->plotEnvironment();
+  }
 
   // create the action client
   // true causes the client to spin its own thread
-  actionlib::SimpleActionClient<twc_msgs::ProcessJobAction> ac("plan_job", true);
+  actionlib::SimpleActionClient<tesseract_msgs::GetMotionPlanAction> ac("/tesseract_planning_server/tesseract_get_motion_plan", true);
 
   // wait for the action server to start
   ROS_INFO("Waiting for action server to start.");
   ac.waitForServer();  // will wait for infinite time
 
   ROS_INFO("Action server started, sending goal.");
-  twc_msgs::ProcessJobGoal goal;
+  tesseract_msgs::GetMotionPlanGoal goal;
 
-  //  goal.start_state.name = { "axis_1", "axis_2", "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
-  //  goal.start_state.position = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+  std::vector<std::vector<Eigen::Isometry3d>> paths;
+  parsePathFromFile(paths, tool_path);
+  CompositeInstruction program = createProgram(paths);
 
-  goal.start_state.name = { "robot_joint_1", "robot_joint_2", "robot_joint_3",
-                            "robot_joint_4", "robot_joint_5", "robot_joint_6" };
-  goal.start_state.position = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-
-  goal.end_state = goal.start_state;
-
-  goal.header.frame_id = "part_link";
-  std::vector<geometry_msgs::PoseArray> paths;
-  parsePathFromFile(paths, tool_path, goal.header.frame_id);
-  for (std::size_t i = 0; i < paths.size(); ++i)
-  {
-    if (i < 2)
-    {
-      goal.paths.push_back(paths[i]);
-    }
-    else if (i < 5)
-    {
-      std::vector<geometry_msgs::PoseArray> sub_path(4);
-      for (std::size_t j = 0; j < paths[i].poses.size(); ++j)
-      {
-        if (j < 2)
-          sub_path[0].poses.push_back(paths[i].poses[j]);
-        else if (j > 7 && j < 12)
-          sub_path[1].poses.push_back(paths[i].poses[j]);
-        else if (j > 17 && j < 22)
-          sub_path[2].poses.push_back(paths[i].poses[j]);
-        else if (j > paths[i].poses.size() - 3)
-          sub_path[3].poses.push_back(paths[i].poses[j]);
-      }
-      for (auto& sp : sub_path)
-        goal.paths.push_back(sp);
-    }
-    else
-    {
-      goal.paths.push_back(paths[i]);
-    }
-  }
+  goal.request.name = goal.RASTER_FT_PLANNER_NAME;
+  goal.request.instructions = toXMLString(program);
 
   ac.sendGoal(goal);
   ac.waitForResult();
@@ -163,10 +193,9 @@ int main(int argc, char** argv)
   ROS_INFO("Action finished: %s", state.toString().c_str());
   auto result = ac.getResult();
 
-  // Publish Trajectory for visualization
-  tesseract_msgs::Trajectory trajectory_msg;
-  tesseract_rosutils::toJointTrajectory(trajectory_msg.joint_trajectory, result->process_plans[0]);
-  trajectory_pub.publish(trajectory_msg);
+  Instruction program_results = fromXMLString(result->response.results);
+  if (plotter != nullptr)
+    plotter->plotTrajectory(program_results);
 
   ros::spin();
 
