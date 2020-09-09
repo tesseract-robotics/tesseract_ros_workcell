@@ -9,11 +9,18 @@
   <author >Levi Armstrong</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>twc_motion_planning</depend>
   <depend>twc_msgs</depend>
   <depend>tesseract_msgs</depend>
   <depend>actionlib</depend>
   <depend>tesseract_rosutils</depend>
+  <depend>tesseract_monitoring</depend>
+  <depend>tesseract_command_language</depend>
+  <depend>tesseract_environment</depend>
+  <depend>tesseract_visualization</depend>
+
+  <exec_depend>tesseract_planning_server</exec_depend>
+  <exec_depend>twc_support</exec_depend>
+  <exec_depend>tesseract_rviz</exec_depend>
 
   <export>
   </export>
