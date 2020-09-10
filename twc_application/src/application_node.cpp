@@ -74,10 +74,14 @@ bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raster_strip
   return true;
 }
 
-CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry3d>>& raster_strips)
+CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry3d>>& raster_strips,
+                                   const std::string& working_frame,
+                                   Eigen::Isometry3d tcp,
+                                   Eigen::Isometry3d transform = Eigen::Isometry3d::Identity())
 {
   ManipulatorInfo manip_info("robot_only");
-  manip_info.working_frame = "part_link";
+  manip_info.working_frame = working_frame;
+  manip_info.tcp = tcp;
   CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, manip_info);
 
   // Start Joint Position for the program
@@ -92,7 +96,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     if (rs == 0)
     {
       // Define from start composite instruction
-      CartesianWaypoint wp1 = raster_strips[rs][0];
+      CartesianWaypoint wp1 = transform * raster_strips[rs][0];
       PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, "freespace_profile");
       plan_f0.setDescription("from_start_plan");
       CompositeInstruction from_start;
@@ -107,7 +111,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
 
     for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
     {
-      CartesianWaypoint wp = raster_strips[rs][i];
+      CartesianWaypoint wp = transform * raster_strips[rs][i];
       raster_segment.push_back(PlanInstruction(wp, PlanInstructionType::LINEAR, "RASTER"));
     }
     program.push_back(raster_segment);
@@ -116,7 +120,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     if (rs < raster_strips.size() - 1)
     {
       // Add transition
-      CartesianWaypoint twp = raster_strips[rs + 1].front();
+      CartesianWaypoint twp = transform * raster_strips[rs + 1].front();
 
       PlanInstruction tranisiton_instruction1(twp, PlanInstructionType::FREESPACE, "freespace_profile");
       tranisiton_instruction1.setDescription("transition_from_end_plan");
@@ -142,6 +146,46 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
   return program;
 }
 
+CompositeInstruction createFreespaceProgram(Eigen::VectorXd jp, Eigen::Isometry3d tcp)
+{
+  ManipulatorInfo manip_info("robot_only");
+  manip_info.tcp = tcp;
+  CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, manip_info);
+
+  // Start Joint Position for the program
+  std::vector<std::string> joint_names = { "robot_joint_1", "robot_joint_2", "robot_joint_3",
+                                           "robot_joint_4", "robot_joint_5", "robot_joint_6" };
+  StateWaypoint swp1 = StateWaypoint(joint_names, Eigen::VectorXd::Zero(6));
+  PlanInstruction start_instruction(swp1, PlanInstructionType::START);
+  program.setStartInstruction(start_instruction);
+
+
+  JointWaypoint jwp = JointWaypoint(joint_names, jp);
+  program.push_back(PlanInstruction(jwp, PlanInstructionType::FREESPACE));
+  return program;
+}
+
+CompositeInstruction createCartesianProgram(Eigen::Isometry3d tcp)
+{
+  ManipulatorInfo manip_info("robot_only");
+  manip_info.tcp = tcp;
+  CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, manip_info);
+
+  // Start Joint Position for the program
+  std::vector<std::string> joint_names = { "robot_joint_1", "robot_joint_2", "robot_joint_3",
+                                           "robot_joint_4", "robot_joint_5", "robot_joint_6" };
+  StateWaypoint swp1 = StateWaypoint(joint_names, Eigen::VectorXd::Zero(6));
+  PlanInstruction start_instruction(swp1, PlanInstructionType::START);
+  program.setStartInstruction(start_instruction);
+
+  CartesianWaypoint cwp1(Eigen::Isometry3d::Identity() * Eigen::Translation3d(-0.2, 0, 1.5) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d(1, 0, 0)));
+  CartesianWaypoint cwp2(Eigen::Isometry3d::Identity() * Eigen::Translation3d(0.2, 0, 1.5) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d(1, 0, 0)));
+  program.push_back(PlanInstruction(cwp1, PlanInstructionType::FREESPACE));
+  program.push_back(PlanInstruction(cwp2, PlanInstructionType::LINEAR));
+  return program;
+}
+
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "application_node");
@@ -158,6 +202,7 @@ int main(int argc, char** argv)
   // Create a tesseract interface
   tesseract_monitoring::TesseractMonitorInterface interface;
   tesseract::Tesseract::Ptr thor = interface.getTesseract<tesseract_environment::OFKTStateSolver>("tesseract_workcell_environment");
+  auto current_transforms = thor->getEnvironment()->getCurrentState()->link_transforms;
 
   // Dynamically load ignition visualizer if exist
   tesseract_visualization::VisualizationLoader loader;
@@ -166,7 +211,7 @@ int main(int argc, char** argv)
   if (plotter != nullptr && thor != nullptr)
   {
     plotter->init(thor);
-    plotter->waitForConnection();
+    plotter->waitForConnection(3);
     plotter->plotEnvironment();
   }
 
@@ -181,15 +226,32 @@ int main(int argc, char** argv)
   ROS_INFO("Action server started, sending goal.");
   tesseract_msgs::GetMotionPlanGoal goal;
 
+  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
+  Eigen::Isometry3d tcp = current_transforms["robot_tool0"].inverse() * current_transforms["st_tool0"];
+
+  Eigen::Isometry3d transform = current_transforms["part_link"];
   std::vector<std::vector<Eigen::Isometry3d>> paths;
   parsePathFromFile(paths, tool_path);
-  CompositeInstruction program = createProgram(paths);
+  CompositeInstruction program = createProgram(paths, "", tcp * rot_offset, transform);
+  goal.request.name = goal.RASTER_FT_PLANNER_NAME;
+
+//  Eigen::VectorXd jp = Eigen::VectorXd::Zero(6);
+//  jp(0) = M_PI_2;
+//  CompositeInstruction program = createFreespaceProgram(jp, tcp * rot_offset);
+//  goal.request.name = goal.DESCARTES_PLANNER_NAME;
+
+//  CompositeInstruction program = createCartesianProgram(tcp * rot_offset);
+//  goal.request.name = goal.DESCARTES_PLANNER_NAME;
 
   if (plotter != nullptr && thor != nullptr)
+  {
+    plotter->waitForInput();
     plotter->plotToolPath(program);
+  }
 
-  goal.request.name = goal.RASTER_FT_PLANNER_NAME;
   goal.request.instructions = toXMLString(program);
+  std::cout << goal.request.instructions << std::endl;
+  goal.request.num_threads = 2;
 
   ac.sendGoal(goal);
   ac.waitForResult();
@@ -200,7 +262,10 @@ int main(int argc, char** argv)
 
   Instruction program_results = fromXMLString(result->response.results);
   if (plotter != nullptr && thor != nullptr)
+  {
+    plotter->waitForInput();
     plotter->plotTrajectory(program_results);
+  }
 
   ros::spin();
 
