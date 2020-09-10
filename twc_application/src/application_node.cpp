@@ -76,7 +76,9 @@ bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raster_strip
 
 CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry3d>>& raster_strips)
 {
-  CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator"));
+  ManipulatorInfo manip_info("robot_only");
+  manip_info.working_frame = "part_link";
+  CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, manip_info);
 
   // Start Joint Position for the program
   std::vector<std::string> joint_names = { "robot_joint_1", "robot_joint_2", "robot_joint_3",
@@ -183,6 +185,9 @@ int main(int argc, char** argv)
   parsePathFromFile(paths, tool_path);
   CompositeInstruction program = createProgram(paths);
 
+  if (plotter != nullptr && thor != nullptr)
+    plotter->plotToolPath(program);
+
   goal.request.name = goal.RASTER_FT_PLANNER_NAME;
   goal.request.instructions = toXMLString(program);
 
@@ -194,7 +199,7 @@ int main(int argc, char** argv)
   auto result = ac.getResult();
 
   Instruction program_results = fromXMLString(result->response.results);
-  if (plotter != nullptr)
+  if (plotter != nullptr && thor != nullptr)
     plotter->plotTrajectory(program_results);
 
   ros::spin();
