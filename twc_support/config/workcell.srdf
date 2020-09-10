@@ -13,7 +13,7 @@
     </group>
 
     <!--GROUP OPW KINEMATICS PARAMETERS-->
-    <group_opw group="robot_only" a1="0.1" a2="-0.135" b="0" c1="0.615" c2="0.705" c3="0.755" c4="0.085" offsets="0.0 0.0 -1.570796 0.0 0.0 0.0" sign_corrections="1 1 1 1 1 1"/>
+    <group_opw group="robot_only" a1="0.175" a2="-0.175" b="0" c1="0.495" c2="0.9" c3="0.960" c4="0.135" offsets="0.0 0.0 -1.570796 0.0 0.0 0.0" sign_corrections="1 1 1 1 1 1"/>
 
     <disable_collisions link1="pedestal_base_link" link2="robot_link_5" reason="Never"/>
     <disable_collisions link1="pedestal_base_link" link2="robot_link_4" reason="Never"/>
