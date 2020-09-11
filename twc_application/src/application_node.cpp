@@ -74,6 +74,43 @@ bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raster_strip
   return true;
 }
 
+std::vector<std::vector<Eigen::Isometry3d>> filterPath(std::vector<std::vector<Eigen::Isometry3d>>& paths)
+{
+  std::vector<std::vector<Eigen::Isometry3d>> filter_paths;
+
+  for (std::size_t i = 0; i < paths.size(); ++i)
+  {
+
+    if (i < 2)
+    {
+      filter_paths.push_back(paths[i]);
+    }
+    else if (i < 5)
+    {
+      std::vector<Eigen::Isometry3d> path;
+      for (std::size_t j = 0; j < paths[i].size(); ++j)
+      {
+        if (j < 2)
+          path.push_back(paths[i][j]);
+        else if (j > 7 && j < 12)
+          path.push_back(paths[i][j]);
+        else if (j > 17 && j < 22)
+          path.push_back(paths[i][j]);
+        else if (j > paths[i].size() - 3)
+          path.push_back(paths[i][j]);
+      }
+
+      filter_paths.push_back(path);
+    }
+    else
+    {
+      filter_paths.push_back(paths[i]);
+    }
+  }
+
+  return filter_paths;
+}
+
 CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry3d>>& raster_strips,
                                    const std::string& working_frame,
                                    Eigen::Isometry3d tcp,
@@ -232,7 +269,8 @@ int main(int argc, char** argv)
   Eigen::Isometry3d transform = current_transforms["part_link"];
   std::vector<std::vector<Eigen::Isometry3d>> paths;
   parsePathFromFile(paths, tool_path);
-  CompositeInstruction program = createProgram(paths, "", tcp * rot_offset, transform);
+  std::vector<std::vector<Eigen::Isometry3d>> filtered_path = filterPath(paths);
+  CompositeInstruction program = createProgram(filtered_path, "", tcp * rot_offset, transform);
   goal.request.name = goal.RASTER_FT_PLANNER_NAME;
 
 //  Eigen::VectorXd jp = Eigen::VectorXd::Zero(6);
@@ -250,17 +288,26 @@ int main(int argc, char** argv)
   }
 
   goal.request.instructions = toXMLString(program);
-  std::cout << goal.request.instructions << std::endl;
-  goal.request.num_threads = 2;
+  goal.request.num_threads = 1;
 
   ac.sendGoal(goal);
   ac.waitForResult();
 
   actionlib::SimpleClientGoalState state = ac.getState();
   ROS_INFO("Action finished: %s", state.toString().c_str());
-  auto result = ac.getResult();
 
+  auto result = ac.getResult();
   Instruction program_results = fromXMLString(result->response.results);
+
+  if (!result->response.successful)
+  {
+    ROS_ERROR("Get Motion Plan Failed: %s", result->response.status_string.c_str());
+  }
+  else
+  {
+    ROS_ERROR("Get Motion Plan Successful!");
+  }
+
   if (plotter != nullptr && thor != nullptr)
   {
     plotter->waitForInput();
