@@ -1,100 +1,71 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(twc_motion_planning)
 
-find_package(descartes_light)
-find_package(descartes_samplers)
-find_package(opw_kinematics REQUIRED)
-find_package(tesseract REQUIRED)
-find_package(tesseract_kinematics REQUIRED)
-find_package(tesseract_motion_planners REQUIRED)
-find_package(tesseract_process_planners REQUIRED)
-
 find_package(catkin REQUIRED COMPONENTS
-  eigen_conversions
-  tesseract_rosutils
   tesseract_monitoring
-  twc_msgs
+  tesseract_msgs
+  tesseract_planning_server
 )
+
+find_package(Boost REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(tesseract_command_language REQUIRED)
+find_package(tesseract_process_managers REQUIRED)
+find_package(cmake_common_scripts REQUIRED)
+find_package(tesseract_common REQUIRED)
+find_package(tesseract_collision REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    sanding_process_planner
+    ${PROJECT_NAME}_planning_server
   CATKIN_DEPENDS
-    eigen_conversions
-    tesseract_rosutils
+    tesseract_msgs
     tesseract_monitoring
-    twc_msgs
+    tesseract_planning_server
   DEPENDS
-    descartes_light
-    descartes_samplers
-    tesseract
-    tesseract_kinematics
-    tesseract_monitoring
-    tesseract_motion_planners
-    tesseract_process_planners
+    tesseract_command_language
+    tesseract_process_managers
+    tesseract_planning_server
 )
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+# Load variable for clang tidy args, compiler options and cxx version
+tesseract_variables()
 
-add_library(process_definition_generator
-  src/sanding_definition_generator.cpp)
-add_dependencies(process_definition_generator
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS})
-target_link_libraries(process_definition_generator PUBLIC
-  tesseract::tesseract_process_planners
-  tesseract::tesseract_motion_planners_core)
+add_library(${PROJECT_NAME}_planning_server SHARED src/twc_planning_server.cpp)
+target_link_libraries(${PROJECT_NAME}_planning_server PUBLIC tesseract::tesseract_collision_core tesseract::tesseract_command_language tesseract::tesseract_process_managers ${catkin_LIBRARIES})
+target_compile_options(${PROJECT_NAME}_planning_server PRIVATE ${TESSERACT_COMPILE_OPTIONS})
+target_clang_tidy(${PROJECT_NAME}_planning_server ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+target_cxx_version(${PROJECT_NAME}_planning_server PUBLIC VERSION 17)
+target_include_directories(${PROJECT_NAME}_planning_server PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:include>")
+target_include_directories(${PROJECT_NAME}_planning_server SYSTEM PUBLIC
+    ${EIGEN3_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS})
 
-add_library(sanding_process_planner
-  src/sanding_process_planner.cpp)
-add_dependencies(sanding_process_planner
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS})
-target_link_libraries(sanding_process_planner PUBLIC
-  ${catkin_LIBRARIES}
-  process_definition_generator
-  descartes::descartes_light
-  descartes::descartes_samplers
-  tesseract::tesseract_kinematics_opw
-  tesseract::tesseract_process_planners
-  tesseract::tesseract_motion_planners_core
-  tesseract::tesseract_motion_planners_ompl
-  tesseract::tesseract_motion_planners_trajopt
-  tesseract::tesseract_motion_planners_descartes)
-
-add_library(planning_manager
-  src/planning_manager.cpp)
-add_dependencies(planning_manager
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS})
-target_link_libraries(planning_manager PUBLIC
-  ${catkin_LIBRARIES}
-  sanding_process_planner)
-
-add_executable(planning_manager_node
-  src/planning_manager_node.cpp)
-add_dependencies(planning_manager_node
-  ${planning_manager_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS})
-target_link_libraries(planning_manager_node
-  planning_manager
-  ${catkin_LIBRARIES})
+add_executable(${PROJECT_NAME}_planning_server_node src/twc_planning_server_node.cpp)
+target_link_libraries(${PROJECT_NAME}_planning_server_node PRIVATE ${PROJECT_NAME}_planning_server ${catkin_LIBRARIES})
+target_compile_options(${PROJECT_NAME}_planning_server_node PRIVATE ${TESSERACT_COMPILE_OPTIONS})
+target_clang_tidy(${PROJECT_NAME}_planning_server_node ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+target_cxx_version(${PROJECT_NAME}_planning_server_node PRIVATE VERSION 17)
+target_include_directories(${PROJECT_NAME}_planning_server_node PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:include>")
+target_include_directories(${PROJECT_NAME}_planning_server_node SYSTEM PUBLIC
+    ${catkin_INCLUDE_DIRS})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 install(
-  TARGETS
-    process_definition_generator
-    sanding_process_planner
-    planning_manager
-    planning_manager_node
+  TARGETS ${PROJECT_NAME}_planning_server ${PROJECT_NAME}_planning_server_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

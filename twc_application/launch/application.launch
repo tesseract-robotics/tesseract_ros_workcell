@@ -7,7 +7,7 @@
 
   <!-- Tesseract Monitor Parameters -->
   <arg name="robot_description" default="robot_description"/>
-  <arg name="descrete_plugin" default="BulletDiscreteBVHManager"/>
+  <arg name="discrete_plugin" default="BulletDiscreteBVHManager"/>
   <arg name="continuous_plugin" default="BulletCastBVHManager"/>
   <arg name="joint_state_topic" default=""/>
   <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
@@ -18,7 +18,7 @@
   <!-- Launch Tesseract Monitor -->
   <node pkg="tesseract_monitoring" type="tesseract_monitoring_environment_node" name="tesseract_environment_monitor">
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
-    <param name="descrete_plugin" type="string" value="$(arg descrete_plugin)"/>
+    <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
     <param name="joint_state_topic" type="string" value="$(arg joint_state_topic)"/>
     <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)"/>
@@ -27,9 +27,9 @@
 
   <!-- Launch Tesseract Planning Server -->
   <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
-  <node pkg="tesseract_planning_server" type="tesseract_planning_server_node" name="tesseract_planning_server">
+  <node pkg="twc_motion_planning" type="twc_motion_planning_planning_server_node" name="twc_planning_server">
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
-    <param name="descrete_plugin" type="string" value="$(arg descrete_plugin)"/>
+    <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
     <param name="monitor_namespace" type="string" value="tesseract_workcell_planning_server"/>
     <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>

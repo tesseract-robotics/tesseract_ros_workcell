@@ -254,7 +254,7 @@ int main(int argc, char** argv)
 
   // create the action client
   // true causes the client to spin its own thread
-  actionlib::SimpleActionClient<tesseract_msgs::GetMotionPlanAction> ac("/tesseract_planning_server/tesseract_get_motion_plan", true);
+  actionlib::SimpleActionClient<tesseract_msgs::GetMotionPlanAction> ac("/twc_planning_server/tesseract_get_motion_plan", true);
 
   // wait for the action server to start
   ROS_INFO("Waiting for action server to start.");
@@ -271,7 +271,7 @@ int main(int argc, char** argv)
   parsePathFromFile(paths, tool_path);
   std::vector<std::vector<Eigen::Isometry3d>> filtered_path = filterPath(paths);
   CompositeInstruction program = createProgram(filtered_path, "", tcp * rot_offset, transform);
-  goal.request.name = goal.RASTER_FT_PLANNER_NAME;
+  goal.request.name = goal.RASTER_G_FT_PLANNER_NAME;
 
 //  Eigen::VectorXd jp = Eigen::VectorXd::Zero(6);
 //  jp(0) = M_PI_2;
