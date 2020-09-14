@@ -19,6 +19,7 @@
   <depend>tesseract_visualization</depend>
 
   <exec_depend>tesseract_planning_server</exec_depend>
+  <exec_depend>twc_motion_planning</exec_depend>
   <exec_depend>twc_support</exec_depend>
   <exec_depend>tesseract_rviz</exec_depend>
 

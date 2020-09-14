@@ -9,16 +9,16 @@
   <author >Levi Armstrong</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>descartes_light</depend>
-  <depend>opw_kinematics</depend>
-  <depend>tesseract</depend>
-  <depend>tesseract_kinematics</depend>
-  <depend>tesseract_motion_planners</depend>
-  <depend>tesseract_process_planners</depend>
-  <depend>eigen_conversions</depend>
-  <depend>tesseract_rosutils</depend>
+  <build_depend>cmake_common_scripts</build_depend>
+
   <depend>tesseract_monitoring</depend>
-  <depend>twc_msgs</depend>
+  <depend>tesseract_msgs</depend>
+  <depend>tesseract_common</depend>
+  <depend>tesseract_command_language</depend>
+  <depend>tesseract_process_managers</depend>
+  <depend>tesseract_motion_planners</depend>
+  <depend>tesseract_planning_server</depend>
+  <depend>tesseract_collision</depend>
 
   <export>
   </export>
