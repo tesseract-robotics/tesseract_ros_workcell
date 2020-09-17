@@ -134,7 +134,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     {
       // Define from start composite instruction
       CartesianWaypoint wp1 = transform * raster_strips[rs][0];
-      PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, "FREESPACE");
+      PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, "FREESPACE_LVS");
       plan_f0.setDescription("from_start_plan");
       CompositeInstruction from_start;
       from_start.setDescription("from_start");
@@ -149,7 +149,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
     {
       CartesianWaypoint wp = transform * raster_strips[rs][i];
-      raster_segment.push_back(PlanInstruction(wp, PlanInstructionType::LINEAR, "RASTER"));
+      raster_segment.push_back(PlanInstruction(wp, PlanInstructionType::LINEAR, "RASTER_LVS"));
     }
     program.push_back(raster_segment);
 
@@ -159,7 +159,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
       // Add transition
       CartesianWaypoint twp = transform * raster_strips[rs + 1].front();
 
-      PlanInstruction tranisiton_instruction1(twp, PlanInstructionType::FREESPACE, "TRANSITION");
+      PlanInstruction tranisiton_instruction1(twp, PlanInstructionType::FREESPACE, "TRANSITION_LVS");
       tranisiton_instruction1.setDescription("transition_from_end_plan");
 
       CompositeInstruction transition;
@@ -171,7 +171,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     else
     {
       // Add to end instruction
-      PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, "FREESPACE");
+      PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, "FREESPACE_LVS");
       plan_f2.setDescription("to_end_plan");
       CompositeInstruction to_end;
       to_end.setDescription("to_end");

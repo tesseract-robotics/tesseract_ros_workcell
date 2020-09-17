@@ -44,8 +44,8 @@ public:
                     std::string discrete_plugin = "",
                     std::string continuous_plugin = "");
 
-  void loadTWCDefaultProfiles();
-
+  void loadTWCPlannerProfilesLVS();
+  void loadTWCDefaultProfilesFixed();
 };
 
 }

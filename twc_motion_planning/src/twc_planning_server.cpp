@@ -23,6 +23,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <tesseract_motion_planners/simple/profile/simple_planner_default_lvs_plan_profile.h>
 #include <twc_motion_planning/twc_planning_server.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_default_plan_profile.h>
 #include <tesseract_motion_planners/ompl/problem_generators/default_problem_generator.h>
@@ -35,7 +37,8 @@ TWCPlanningServer::TWCPlanningServer(const std::string& robot_description,
                                      std::string continuous_plugin)
   : tesseract_planning_server::TesseractPlanningServer (robot_description, name, discrete_plugin, continuous_plugin)
 {
-  loadTWCDefaultProfiles();
+  loadTWCPlannerProfilesLVS();
+  loadTWCDefaultProfilesFixed();
 }
 
 TWCPlanningServer::TWCPlanningServer(std::shared_ptr<tesseract::Tesseract> tesseract,
@@ -44,14 +47,24 @@ TWCPlanningServer::TWCPlanningServer(std::shared_ptr<tesseract::Tesseract> tesse
                                                  std::string continuous_plugin)
   : tesseract_planning_server::TesseractPlanningServer (tesseract, name, discrete_plugin, continuous_plugin)
 {
-  loadTWCDefaultProfiles();
+  loadTWCPlannerProfilesLVS();
+  loadTWCDefaultProfilesFixed();
 }
 
-void TWCPlanningServer::loadTWCDefaultProfiles()
+void TWCPlanningServer::loadTWCPlannerProfilesLVS()
 {
-  simple_plan_profiles_["FREESPACE"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(20, 20);
-  simple_plan_profiles_["TRANSITION"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(10, 10);
-  simple_plan_profiles_["RASTER"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(1, 1);
+  simple_plan_profiles_["FREESPACE_LVS"] = std::make_shared<tesseract_planning::SimplePlannerDefaultLVSPlanProfile>(5 * M_PI / 180,
+                                                                                                                0.15,
+                                                                                                                5 * M_PI / 180,
+                                                                                                                20);
+  simple_plan_profiles_["TRANSITION_LVS"] = std::make_shared<tesseract_planning::SimplePlannerDefaultLVSPlanProfile>(5 * M_PI / 180,
+                                                                                                                 0.15,
+                                                                                                                 5 * M_PI / 180,
+                                                                                                                 10);
+  simple_plan_profiles_["RASTER_LVS"] = std::make_shared<tesseract_planning::SimplePlannerDefaultLVSPlanProfile>(20 * M_PI / 180,
+                                                                                                             0.5,
+                                                                                                             20 * M_PI / 180,
+                                                                                                             1);
 
   auto p = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
   auto pp = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
@@ -60,8 +73,25 @@ void TWCPlanningServer::loadTWCDefaultProfiles()
   p->planners.push_back(pp);
   p->planners.push_back(pp);
 
-  ompl_plan_profiles_["FREESPACE"] = p;
-  ompl_plan_profiles_["TRANSITION"] =p;
+  ompl_plan_profiles_["FREESPACE_LVS"] = p;
+  ompl_plan_profiles_["TRANSITION_LVS"] = p;
+}
+
+void TWCPlanningServer::loadTWCDefaultProfilesFixed()
+{
+  simple_plan_profiles_["FREESPACE_FIXED"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(20, 20);
+  simple_plan_profiles_["TRANSITION_FIXED"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(10, 10);
+  simple_plan_profiles_["RASTER_FIXED"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(1, 1);
+
+  auto p = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
+  auto pp = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
+  pp->range = 0.1;
+  p->planners.clear();
+  p->planners.push_back(pp);
+  p->planners.push_back(pp);
+
+  ompl_plan_profiles_["FREESPACE_FIXED"] = p;
+  ompl_plan_profiles_["TRANSITION_FIXED"] = p;
 }
 
 }
