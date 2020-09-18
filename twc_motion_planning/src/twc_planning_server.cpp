@@ -24,6 +24,8 @@
  * limitations under the License.
  */
 #include <twc_motion_planning/twc_planning_server.h>
+#include <tesseract_motion_planners/simple/profile/simple_planner_default_plan_profile.h>
+#include <tesseract_motion_planners/ompl/problem_generators/default_problem_generator.h>
 
 namespace twc
 {
@@ -33,6 +35,7 @@ TWCPlanningServer::TWCPlanningServer(const std::string& robot_description,
                                      std::string continuous_plugin)
   : tesseract_planning_server::TesseractPlanningServer (robot_description, name, discrete_plugin, continuous_plugin)
 {
+  loadTWCDefaultProfiles();
 }
 
 TWCPlanningServer::TWCPlanningServer(std::shared_ptr<tesseract::Tesseract> tesseract,
@@ -41,6 +44,24 @@ TWCPlanningServer::TWCPlanningServer(std::shared_ptr<tesseract::Tesseract> tesse
                                                  std::string continuous_plugin)
   : tesseract_planning_server::TesseractPlanningServer (tesseract, name, discrete_plugin, continuous_plugin)
 {
+  loadTWCDefaultProfiles();
+}
+
+void TWCPlanningServer::loadTWCDefaultProfiles()
+{
+  simple_plan_profiles_["FREESPACE"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(20, 20);
+  simple_plan_profiles_["TRANSITION"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(10, 10);
+  simple_plan_profiles_["RASTER"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(1, 1);
+
+  auto p = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
+  auto pp = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
+  pp->range = 0.1;
+  p->planners.clear();
+  p->planners.push_back(pp);
+  p->planners.push_back(pp);
+
+  ompl_plan_profiles_["FREESPACE"] = p;
+  ompl_plan_profiles_["TRANSITION"] =p;
 }
 
 }

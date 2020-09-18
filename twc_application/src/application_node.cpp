@@ -134,7 +134,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     {
       // Define from start composite instruction
       CartesianWaypoint wp1 = transform * raster_strips[rs][0];
-      PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, "freespace_profile");
+      PlanInstruction plan_f0(wp1, PlanInstructionType::FREESPACE, "FREESPACE");
       plan_f0.setDescription("from_start_plan");
       CompositeInstruction from_start;
       from_start.setDescription("from_start");
@@ -159,7 +159,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
       // Add transition
       CartesianWaypoint twp = transform * raster_strips[rs + 1].front();
 
-      PlanInstruction tranisiton_instruction1(twp, PlanInstructionType::FREESPACE, "freespace_profile");
+      PlanInstruction tranisiton_instruction1(twp, PlanInstructionType::FREESPACE, "TRANSITION");
       tranisiton_instruction1.setDescription("transition_from_end_plan");
 
       CompositeInstruction transition;
@@ -171,7 +171,7 @@ CompositeInstruction createProgram(const std::vector<std::vector<Eigen::Isometry
     else
     {
       // Add to end instruction
-      PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, "freespace_profile");
+      PlanInstruction plan_f2(swp1, PlanInstructionType::FREESPACE, "FREESPACE");
       plan_f2.setDescription("to_end_plan");
       CompositeInstruction to_end;
       to_end.setDescription("to_end");
@@ -263,21 +263,24 @@ int main(int argc, char** argv)
   ROS_INFO("Action server started, sending goal.");
   tesseract_msgs::GetMotionPlanGoal goal;
 
-  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
   Eigen::Isometry3d tcp = current_transforms["robot_tool0"].inverse() * current_transforms["st_tool0"];
 
+  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
   Eigen::Isometry3d transform = current_transforms["part_link"];
   std::vector<std::vector<Eigen::Isometry3d>> paths;
   parsePathFromFile(paths, tool_path);
   std::vector<std::vector<Eigen::Isometry3d>> filtered_path = filterPath(paths);
-  CompositeInstruction program = createProgram(filtered_path, "", tcp * rot_offset, transform);
+  int only_first_x = 2;
+  std::vector<std::vector<Eigen::Isometry3d>> sub_path(filtered_path.begin(), filtered_path.begin() + only_first_x);
+  CompositeInstruction program = createProgram(sub_path, "", tcp * rot_offset, transform);
   goal.request.name = goal.RASTER_G_FT_PLANNER_NAME;
 
 //  Eigen::VectorXd jp = Eigen::VectorXd::Zero(6);
 //  jp(0) = M_PI_2;
 //  CompositeInstruction program = createFreespaceProgram(jp, tcp * rot_offset);
-//  goal.request.name = goal.DESCARTES_PLANNER_NAME;
+//  goal.request.name = goal.CARTESIAN_PLANNER_NAME;
 
+//  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d(0, 0, 1));
 //  CompositeInstruction program = createCartesianProgram(tcp * rot_offset);
 //  goal.request.name = goal.DESCARTES_PLANNER_NAME;
 
@@ -310,6 +313,9 @@ int main(int argc, char** argv)
 
   if (plotter != nullptr && thor != nullptr)
   {
+    plotter->waitForInput();
+    plotter->plotToolPath(program_results);
+
     plotter->waitForInput();
     plotter->plotTrajectory(program_results);
   }
