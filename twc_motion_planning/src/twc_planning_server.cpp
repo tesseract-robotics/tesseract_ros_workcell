@@ -25,7 +25,8 @@
  */
 #include <twc_motion_planning/twc_planning_server.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_default_plan_profile.h>
-#include <tesseract_motion_planners/ompl/problem_generators/default_problem_generator.h>
+#include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 
 namespace twc
 {
@@ -54,6 +55,8 @@ void TWCPlanningServer::loadTWCDefaultProfiles()
   simple_plan_profiles_["RASTER"] = std::make_shared<tesseract_planning::SimplePlannerDefaultPlanProfile>(1, 1);
 
   auto p = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
+  p->longest_valid_segment_length = 0.1;
+
   auto pp = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
   pp->range = 0.1;
   p->planners.clear();
@@ -61,7 +64,14 @@ void TWCPlanningServer::loadTWCDefaultProfiles()
   p->planners.push_back(pp);
 
   ompl_plan_profiles_["FREESPACE"] = p;
-  ompl_plan_profiles_["TRANSITION"] =p;
+  ompl_plan_profiles_["TRANSITION"] = p;
+
+  auto trajopt_composite_profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
+  trajopt_composite_profile->longest_valid_segment_length = 0.1;
+
+  trajopt_composite_profiles_["FREESPACE"] = trajopt_composite_profile;
+  trajopt_composite_profiles_["TRANSITION"] = trajopt_composite_profile;
+  trajopt_composite_profiles_["RASTER"] = trajopt_composite_profile;
 }
 
 }
