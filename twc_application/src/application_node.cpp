@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 //      nh.advertise<tesseract_msgs::Trajectory>("/twc_motion_planning/process_trajectory", 1, true);
 
   // Create a tesseract interface
-  tesseract_monitoring::TesseractMonitorInterface interface;
+  tesseract_monitoring::TesseractMonitorInterface interface("tesseract_workcell");
   tesseract::Tesseract::Ptr thor = interface.getTesseract<tesseract_environment::OFKTStateSolver>("tesseract_workcell_environment");
   auto current_transforms = thor->getEnvironment()->getCurrentState()->link_transforms;
 
