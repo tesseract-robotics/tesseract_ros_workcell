@@ -2,6 +2,7 @@
 #include <ros/package.h>
 #include <geometry_msgs/PoseArray.h>
 #include <tesseract_msgs/GetMotionPlanAction.h>
+#include <tesseract_rosutils/plotting.h>
 #include <actionlib/client/simple_action_client.h>
 #include <tesseract_rosutils/conversions.h>
 #include <tesseract_command_language/command_language.h>
@@ -232,10 +233,6 @@ int main(int argc, char** argv)
   pnh.param<std::string>("tool_path", tool_path);
   ROS_INFO("Using tool path file: %s", tool_path.c_str());
 
-//  // Trajectory publisher
-//  ros::Publisher trajectory_pub =
-//      nh.advertise<tesseract_msgs::Trajectory>("/twc_motion_planning/process_trajectory", 1, true);
-
   // Create a tesseract interface
   tesseract_monitoring::TesseractMonitorInterface interface("tesseract_workcell");
   tesseract::Tesseract::Ptr thor = interface.getTesseract<tesseract_environment::OFKTStateSolver>("tesseract_workcell_environment");
@@ -250,6 +247,13 @@ int main(int argc, char** argv)
     plotter->init(thor);
     plotter->waitForConnection(3);
     plotter->plotEnvironment();
+  }
+
+  if((plotter != nullptr && !plotter->isConnected()) || (plotter == nullptr && thor != nullptr))
+  {
+    plotter = std::make_shared<tesseract_rosutils::ROSPlotting>();
+    plotter->init(thor);
+    plotter->waitForConnection(3);
   }
 
   // create the action client
