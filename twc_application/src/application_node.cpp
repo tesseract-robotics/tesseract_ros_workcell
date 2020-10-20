@@ -269,22 +269,22 @@ int main(int argc, char** argv)
 
   Eigen::Isometry3d tcp = current_transforms["robot_tool0"].inverse() * current_transforms["st_tool0"];
 
-  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
-  Eigen::Isometry3d transform = current_transforms["part_link"];
-  std::vector<std::vector<Eigen::Isometry3d>> paths;
-  parsePathFromFile(paths, tool_path);
-  std::vector<std::vector<Eigen::Isometry3d>> filtered_path = filterPath(paths);
-  CompositeInstruction program = createProgram(filtered_path, "", tcp * rot_offset, transform);
-  goal.request.name = goal.RASTER_G_FT_PLANNER_NAME;
+//  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
+//  Eigen::Isometry3d transform = current_transforms["part_link"];
+//  std::vector<std::vector<Eigen::Isometry3d>> paths;
+//  parsePathFromFile(paths, tool_path);
+//  std::vector<std::vector<Eigen::Isometry3d>> filtered_path = filterPath(paths);
+//  CompositeInstruction program = createProgram(filtered_path, "", tcp * rot_offset, transform);
+//  goal.request.name = goal.RASTER_G_FT_PLANNER_NAME;
 
 //  Eigen::VectorXd jp = Eigen::VectorXd::Zero(6);
 //  jp(0) = M_PI_2;
 //  CompositeInstruction program = createFreespaceProgram(jp, tcp * rot_offset);
 //  goal.request.name = goal.CARTESIAN_PLANNER_NAME;
 
-//  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d(0, 0, 1));
-//  CompositeInstruction program = createCartesianProgram(tcp * rot_offset);
-//  goal.request.name = goal.DESCARTES_PLANNER_NAME;
+  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(-M_PI_2, Eigen::Vector3d(0, 0, 1));
+  CompositeInstruction program = createCartesianProgram(tcp * rot_offset);
+  goal.request.name = goal.DESCARTES_PLANNER_NAME;
 
   if (plotter != nullptr && thor != nullptr)
   {
@@ -322,6 +322,41 @@ int main(int argc, char** argv)
     plotter->plotTrajectory(program_results);
   }
 
+  ////////////////////////////////////////////////////////////////////////
+  // Now lets use the results and set as seed then just plan with trajopt
+  ////////////////////////////////////////////////////////////////////////
+  if (result->response.successful)
+  {
+    goal.request.seed = result->response.results;
+    goal.request.name = goal.TRAJOPT_PLANNER_NAME;
+
+    ac.sendGoal(goal);
+    ac.waitForResult();
+
+    actionlib::SimpleClientGoalState seed_state = ac.getState();
+    ROS_INFO("Action (With Seed) finished: %s", seed_state.toString().c_str());
+
+    result = ac.getResult();
+    Instruction seed_program_results = fromXMLString(result->response.results);
+
+    if (!result->response.successful)
+    {
+      ROS_ERROR("Get Motion Plan Failed: %s", result->response.status_string.c_str());
+    }
+    else
+    {
+      ROS_ERROR("Get Motion Plan Successful!");
+    }
+
+    if (plotter != nullptr && thor != nullptr)
+    {
+      plotter->waitForInput();
+      plotter->plotToolPath(seed_program_results);
+
+      plotter->waitForInput();
+      plotter->plotTrajectory(seed_program_results);
+    }
+  }
   ros::spin();
 
   return 0;
