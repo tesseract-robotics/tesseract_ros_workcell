@@ -48,7 +48,7 @@
   <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
 
   <!-- Launch Application Node -->
-  <node if="$(arg application)" name="application_node" pkg="twc_application" type="twc_application_node" required="true">
+  <node if="$(arg application)" name="twc_application_node" pkg="twc_application" type="twc_application_node" required="true">
     <param name="tool_path" type="str" value="$(find twc_application)/config/job_path.yaml"/>
   </node>
 
