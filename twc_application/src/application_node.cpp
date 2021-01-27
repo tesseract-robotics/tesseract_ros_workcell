@@ -6,7 +6,10 @@
 #include <tesseract_rosutils/conversions.h>
 #include <actionlib/client/simple_action_client.h>
 #include <tesseract_command_language/deserialize.h>
+#include <tesseract_command_language/utils/utils.h>
+#include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_visualization/visualization_loader.h>
+#include <tesseract_visualization/markers/toolpath_marker.h>
 #include <tesseract_monitoring/tesseract_monitor_interface.h>
 #include <tesseract_environment/ofkt/ofkt_state_solver.h>
 
@@ -17,6 +20,7 @@
 #include <tf2_eigen/tf2_eigen.h>
 
 using namespace tesseract_planning;
+using tesseract_environment::Environment;
 
 static const std::string TOOLPATH = "twc_toolpath";
 
@@ -38,25 +42,24 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  tesseract::Tesseract::Ptr thor = interface.getTesseract<tesseract_environment::OFKTStateSolver>("tesseract_workcell_environment");
-  auto current_transforms = thor->getEnvironment()->getCurrentState()->link_transforms;
+  Environment::Ptr env = interface.getEnvironment<tesseract_environment::OFKTStateSolver>("tesseract_workcell_environment");
+  auto current_transforms = env->getCurrentState()->link_transforms;
 
   // Dynamically load ignition visualizer if exist
   tesseract_visualization::VisualizationLoader loader;
   auto plotter = loader.get();
 
-  if (plotter != nullptr && thor != nullptr)
+  if (plotter != nullptr && env != nullptr)
   {
-    plotter->init(thor);
     plotter->waitForConnection(3);
-    plotter->plotEnvironment();
+    plotter->plotEnvironment(env);
   }
 
-  if((plotter != nullptr && !plotter->isConnected()) || (plotter == nullptr && thor != nullptr))
+  if((plotter != nullptr && !plotter->isConnected()) || (plotter == nullptr && env != nullptr))
   {
     plotter = std::make_shared<tesseract_rosutils::ROSPlotting>();
-    plotter->init(thor);
     plotter->waitForConnection(3);
+    plotter->plotEnvironment(env);
   }
 
   // create the action client
@@ -71,15 +74,17 @@ int main(int argc, char** argv)
   Eigen::Isometry3d tcp = current_transforms["robot_tool0"].inverse() * current_transforms["st_tool0"];
 
   ROS_INFO("Action server started, sending goal.");
-  tesseract_msgs::GetMotionPlanGoal goal = twc::createCartesianExampleGoal(tcp);
+//  tesseract_msgs::GetMotionPlanGoal goal = twc::createCartesianExampleGoal(tcp);
 //  tesseract_msgs::GetMotionPlanGoal goal = twc::createFreespaceExampleGoal(tcp);
-//  tesseract_msgs::GetMotionPlanGoal goal = twc::createRasterExampleGoal(tool_path, tcp, current_transforms);
+  tesseract_msgs::GetMotionPlanGoal goal = twc::createRasterExampleGoal(tool_path, tcp, current_transforms);
+//  goal.request.name = "RasterGDebug";
 
   // Plot Tool Path
-  if (plotter != nullptr && thor != nullptr)
+  if (plotter != nullptr && env != nullptr)
   {
+    tesseract_common::Toolpath tp = toToolpath(fromXMLString<Instruction>(goal.request.instructions, defaultInstructionParser), env);
+    plotter->plotMarker(tesseract_visualization::ToolpathMarker(tp));
     plotter->waitForInput();
-    plotter->plotToolPath(fromXMLString(goal.request.instructions));
   }
 
   // Send goal
@@ -90,7 +95,7 @@ int main(int argc, char** argv)
   ROS_INFO("Action finished: %s", state.toString().c_str());
 
   auto result = ac.getResult();
-  Instruction program_results = fromXMLString(result->response.results);
+  Instruction program_results = fromXMLString<Instruction>(result->response.results, defaultInstructionParser);
 
   if (!result->response.successful)
   {
@@ -101,13 +106,18 @@ int main(int argc, char** argv)
     ROS_ERROR("Get Motion Plan Successful!");
   }
 
-  if (plotter != nullptr && thor != nullptr)
+  if (plotter != nullptr && env != nullptr)
   {
-    plotter->waitForInput();
-    plotter->plotToolPath(program_results);
+    const auto* ci = program_results.cast_const<CompositeInstruction>();
+    long num_wp = tesseract_planning::getMoveInstructionCount(*ci);
+    ROS_ERROR("Number of instruction in results: %li!", num_wp);
 
+    tesseract_common::Toolpath tp = toToolpath(program_results, env);
+    plotter->plotMarker(tesseract_visualization::ToolpathMarker(tp));
     plotter->waitForInput();
-    plotter->plotTrajectory(program_results);
+
+    plotter->plotTrajectory(tesseract_planning::toJointTrajectory(*ci), env->getStateSolver());
+    plotter->waitForInput();
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -116,7 +126,7 @@ int main(int argc, char** argv)
   if (result->response.successful)
   {
     goal.request.seed = result->response.results;
-    goal.request.name = goal.TRAJOPT_PLANNER_NAME;
+    goal.request.name = "RasterTrajOpt";
 
     ac.sendGoal(goal);
     ac.waitForResult();
@@ -125,7 +135,7 @@ int main(int argc, char** argv)
     ROS_INFO("Action (With Seed) finished: %s", seed_state.toString().c_str());
 
     result = ac.getResult();
-    Instruction seed_program_results = fromXMLString(result->response.results);
+    Instruction seed_program_results = fromXMLString<Instruction>(result->response.results, defaultInstructionParser);
 
     if (!result->response.successful)
     {
@@ -136,13 +146,15 @@ int main(int argc, char** argv)
       ROS_ERROR("Get Motion Plan Successful!");
     }
 
-    if (plotter != nullptr && thor != nullptr)
+    if (plotter != nullptr && env != nullptr)
     {
-      plotter->waitForInput();
-      plotter->plotToolPath(seed_program_results);
+      const auto* ci = seed_program_results.cast_const<CompositeInstruction>();
+
+//      plotter->waitForInput();
+//      plotter->plotToolpath(env->getStateSolver(), seed_program_results);
 
       plotter->waitForInput();
-      plotter->plotTrajectory(seed_program_results);
+      plotter->plotTrajectory(tesseract_planning::toJointTrajectory(*ci), env->getStateSolver());
     }
   }
   ros::spin();

@@ -258,4 +258,6 @@
     <disable_collisions link1="ati_dock_base_link" link2="ati_qc110m_base_link" reason="Allways"/>
     <disable_collisions link1="ati_dock_base_link" link2="ati_qc110f_base_link" reason="Allways"/>
     <disable_collisions link1="robot_link_4" link2="ati_qc110m_base_link" reason="Never"/>
+
+    <disable_collisions link1="part_link" link2="st_base_link" reason="Allowed"/>
 </robot>

@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.5.0)
-project(twc_application)
 
-#find_package(tesseract_collision REQUIRED)
+# Extract package name and version
+find_package(ros_industrial_cmake_boilerplate REQUIRED)
+extract_package_metadata(pkg)
+project(${pkg_extracted_name} VERSION ${pkg_extracted_version} LANGUAGES CXX)
+
+find_package(tesseract_motion_planners REQUIRED)
 find_package(tesseract_command_language REQUIRED)
 find_package(tesseract_environment REQUIRED)
 find_package(tesseract_visualization REQUIRED)
@@ -22,6 +26,7 @@ catkin_package(
     actionlib
     tesseract_rosutils
   DEPENDS
+    tesseract_motion_planners
     tesseract_visualization
     tesseract_command_language
     tesseract_environment
@@ -35,7 +40,7 @@ include_directories(
 
 add_executable(${PROJECT_NAME}_node src/application_node.cpp)
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node tesseract::tesseract_visualization tesseract::tesseract_command_language tesseract::tesseract_environment_core tesseract::tesseract_environment_ofkt ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_node tesseract::tesseract_motion_planners_core tesseract::tesseract_visualization tesseract::tesseract_command_language tesseract::tesseract_environment_core tesseract::tesseract_environment_ofkt ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
 
 install(
   TARGETS ${PROJECT_NAME}_node

@@ -104,7 +104,7 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
                                                                  tesseract_common::TransformMap current_transforms)
 {
   tesseract_msgs::GetMotionPlanGoal goal;
-  goal.request.name = goal.RASTER_G_FT_PLANNER_NAME;
+  goal.request.name = goal.request.RASTER_G_FT_PLANNER_NAME;
 
   Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
   Eigen::Isometry3d transform = current_transforms["part_link"];
@@ -113,7 +113,7 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
   std::vector<std::vector<Eigen::Isometry3d>> raster_strips = filterPath(paths);
 
   tesseract_planning::ManipulatorInfo manip_info("robot_only");
-  manip_info.tcp = tcp;
+  manip_info.tcp = tcp * rot_offset;
   tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
   // Start Joint Position for the program
@@ -175,7 +175,7 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
     }
   }
 
-  goal.request.instructions = toXMLString(program);
+  goal.request.instructions = tesseract_planning::toXMLString<tesseract_planning::Instruction>(program);
   goal.request.num_threads = 1;
   return goal;
 }
