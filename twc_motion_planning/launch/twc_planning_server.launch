@@ -7,7 +7,7 @@
   <arg name="continuous_plugin" default="BulletCastBVHManager"/>
   <arg name="publish_environment" default="false"/>
 
-  <node pkg="twc_motion_planning" type="twc_motion_planning_planning_server_node" name="twc_planning_server">
+  <node pkg="twc_motion_planning" type="twc_motion_planning_planning_server_node" name="twc_planning_server" output="screen">
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
     <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>

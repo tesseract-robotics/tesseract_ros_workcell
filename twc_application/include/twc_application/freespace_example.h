@@ -15,7 +15,7 @@ inline tesseract_msgs::GetMotionPlanGoal createFreespaceExampleGoal(Eigen::Vecto
 
   tesseract_planning::ManipulatorInfo manip_info("robot_only");
   manip_info.tcp = tcp;
-  tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
+  tesseract_planning::CompositeInstruction program("FREESPACE", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
   // Start Joint Position for the program
   std::vector<std::string> joint_names = { "robot_joint_1", "robot_joint_2", "robot_joint_3",

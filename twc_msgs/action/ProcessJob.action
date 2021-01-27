@@ -26,7 +26,7 @@ geometry_msgs/Pose tool_offset
 ---
 # Result
 
-tesseract_msgs/ProcessPlan[] process_plans  # Array of job process results associated with this job
+tesseract_msgs/Trajectory[] trajectories    # Array of trajectories to execute
 bool success                                # success - a boolean value indicating whether the job was successfully completed
 string error_message                        # error_message - if the job failed, this string can be used to communicate why/how it did so
 

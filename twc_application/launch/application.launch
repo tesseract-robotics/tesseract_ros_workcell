@@ -16,7 +16,7 @@
   <include file="$(find twc_support)/launch/load_workcell.launch" />
 
   <!-- Launch Tesseract Monitor -->
-  <node pkg="tesseract_monitoring" type="tesseract_monitoring_environment_node" name="tesseract_environment_monitor">
+  <node pkg="tesseract_monitoring" type="tesseract_monitoring_environment_node" name="tesseract_environment_monitor" output="screen" required="true">
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
     <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
@@ -27,7 +27,7 @@
 
   <!-- Launch Tesseract Planning Server -->
   <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
-  <node pkg="twc_motion_planning" type="twc_motion_planning_planning_server_node" name="twc_planning_server">
+  <node pkg="twc_motion_planning" type="twc_motion_planning_planning_server_node" name="twc_planning_server" output="screen" required="true">
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
     <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
