@@ -3,8 +3,8 @@
 
 #include <Eigen/Geometry>
 #include <tesseract_msgs/GetMotionPlanAction.h>
+#include <tesseract_command_language/core/serialization.h>
 #include <tesseract_command_language/command_language.h>
-#include <tesseract_command_language/serialize.h>
 
 namespace twc
 {
@@ -31,8 +31,7 @@ inline tesseract_msgs::GetMotionPlanGoal createCartesianExampleGoal(Eigen::Isome
   program.push_back(tesseract_planning::PlanInstruction(cwp1, tesseract_planning::PlanInstructionType::FREESPACE));
   program.push_back(tesseract_planning::PlanInstruction(cwp2, tesseract_planning::PlanInstructionType::LINEAR));
 
-  goal.request.instructions = toXMLString(program);
-  goal.request.num_threads = 1;
+  goal.request.instructions = tesseract_planning::Serialization::toArchiveStringXML(program);
   return goal;
 }
 }

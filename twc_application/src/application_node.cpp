@@ -5,7 +5,7 @@
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/conversions.h>
 #include <actionlib/client/simple_action_client.h>
-#include <tesseract_command_language/deserialize.h>
+#include <tesseract_command_language/core/serialization.h>
 #include <tesseract_command_language/utils/utils.h>
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_visualization/visualization_loader.h>
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   // Plot Tool Path
   if (plotter != nullptr && env != nullptr)
   {
-    tesseract_common::Toolpath tp = toToolpath(fromXMLString<Instruction>(goal.request.instructions, defaultInstructionParser), env);
+    tesseract_common::Toolpath tp = toToolpath(Serialization::fromArchiveStringXML<Instruction>(goal.request.instructions), env);
     plotter->plotMarker(tesseract_visualization::ToolpathMarker(tp));
     plotter->waitForInput();
   }
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
   ROS_INFO("Action finished: %s", state.toString().c_str());
 
   auto result = ac.getResult();
-  Instruction program_results = fromXMLString<Instruction>(result->response.results, defaultInstructionParser);
+  Instruction program_results = Serialization::fromArchiveStringXML<Instruction>(result->response.results);
 
   if (!result->response.successful)
   {
@@ -108,15 +108,15 @@ int main(int argc, char** argv)
 
   if (plotter != nullptr && env != nullptr)
   {
-    const auto* ci = program_results.cast_const<CompositeInstruction>();
-    long num_wp = tesseract_planning::getMoveInstructionCount(*ci);
+    const auto& ci = program_results.as<CompositeInstruction>();
+    long num_wp = tesseract_planning::getMoveInstructionCount(ci);
     ROS_ERROR("Number of instruction in results: %li!", num_wp);
 
     tesseract_common::Toolpath tp = toToolpath(program_results, env);
     plotter->plotMarker(tesseract_visualization::ToolpathMarker(tp));
     plotter->waitForInput();
 
-    plotter->plotTrajectory(tesseract_planning::toJointTrajectory(*ci), env->getStateSolver());
+    plotter->plotTrajectory(tesseract_planning::toJointTrajectory(ci), env->getStateSolver());
     plotter->waitForInput();
   }
 
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     ROS_INFO("Action (With Seed) finished: %s", seed_state.toString().c_str());
 
     result = ac.getResult();
-    Instruction seed_program_results = fromXMLString<Instruction>(result->response.results, defaultInstructionParser);
+    Instruction seed_program_results = Serialization::fromArchiveStringXML<Instruction>(result->response.results);
 
     if (!result->response.successful)
     {
@@ -148,13 +148,13 @@ int main(int argc, char** argv)
 
     if (plotter != nullptr && env != nullptr)
     {
-      const auto* ci = seed_program_results.cast_const<CompositeInstruction>();
+      const auto& ci = seed_program_results.as<CompositeInstruction>();
 
 //      plotter->waitForInput();
 //      plotter->plotToolpath(env->getStateSolver(), seed_program_results);
 
       plotter->waitForInput();
-      plotter->plotTrajectory(tesseract_planning::toJointTrajectory(*ci), env->getStateSolver());
+      plotter->plotTrajectory(tesseract_planning::toJointTrajectory(ci), env->getStateSolver());
     }
   }
   ros::spin();

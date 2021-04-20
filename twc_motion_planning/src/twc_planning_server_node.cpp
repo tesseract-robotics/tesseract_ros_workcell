@@ -69,7 +69,7 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
   ProfileDictionary::Ptr dict = planning_server.getProcessPlanningServer().getProfiles();
 
   auto p = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
-  p->longest_valid_segment_length = 0.1;
+  p->collision_check_config.longest_valid_segment_length = 0.1;
 
   auto pp = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
   pp->range = 0.1;

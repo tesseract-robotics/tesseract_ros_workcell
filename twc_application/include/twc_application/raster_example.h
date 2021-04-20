@@ -3,8 +3,8 @@
 
 #include <Eigen/Geometry>
 #include <tesseract_msgs/GetMotionPlanAction.h>
+#include <tesseract_command_language/core/serialization.h>
 #include <tesseract_command_language/command_language.h>
-#include <tesseract_command_language/serialize.h>
 
 #include <yaml-cpp/yaml.h>
 #include <yaml-cpp/node/iterator.h>
@@ -175,8 +175,7 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
     }
   }
 
-  goal.request.instructions = tesseract_planning::toXMLString<tesseract_planning::Instruction>(program);
-  goal.request.num_threads = 1;
+  goal.request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(program);
   return goal;
 }
 
