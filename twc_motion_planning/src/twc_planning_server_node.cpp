@@ -88,6 +88,7 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
   dict->addProfile<TrajOptCompositeProfile>("RASTER", trajopt_composite_profile);
 
   auto trajopt_plan_profile = std::make_shared<TrajOptDefaultPlanProfile>();
+  trajopt_plan_profile->cartesian_coeff.resize(6);
   trajopt_plan_profile->cartesian_coeff << 5, 5, 5, 5, 5, 0;
 
   dict->addProfile<TrajOptPlanProfile>("FREESPACE", trajopt_plan_profile);
