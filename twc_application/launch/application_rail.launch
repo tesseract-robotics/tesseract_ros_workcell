@@ -16,13 +16,18 @@
 
   <!-- Launch Application Base Nodes -->
   <include file="$(find twc_application)/launch/application_base.launch">
-    <param name="rviz" type="bool" value="$(arg rviz)"/>
-    <param name="robot_description" type="string" value="$(arg robot_description)"/>
-    <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
-    <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
-    <param name="joint_state_topic" type="string" value="$(arg joint_state_topic)"/>
-    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)"/>
+    <arg name="robot_description" value="$(arg robot_description)"/>
+    <arg name="discrete_plugin" value="$(arg discrete_plugin)"/>
+    <arg name="continuous_plugin" value="$(arg continuous_plugin)"/>
+    <arg name="joint_state_topic" value="$(arg joint_state_topic)"/>
+    <arg name="monitor_namespace" value="$(arg monitor_namespace)"/>
   </include>
+
+  <!-- Launch RViz -->
+  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
+
+  <!-- Launch GUI to drive joints   -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
   <!-- Launch Application Node -->
   <node if="$(arg application)" name="twc_application_node" pkg="twc_application" type="twc_application_node" required="true">

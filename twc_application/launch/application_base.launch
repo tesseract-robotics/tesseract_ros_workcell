@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="rviz" default="true" />
-
   <!-- Tesseract Monitor Parameters -->
   <arg name="robot_description" default="robot_description"/>
   <arg name="discrete_plugin" default="BulletDiscreteBVHManager"/>
@@ -26,22 +24,17 @@
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
     <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
-    <param name="monitor_namespace" type="string" value="tesseract_workcell_planning_server"/>
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)_planning_server"/>
     <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
   </node>
 
   <!-- Launch Tesseract Contact Monitor -->
   <!-- The planning server will monitor the environment namespace monitor_namespace for environment updates  -->
   <node name="tesseract_contact_monitoring" pkg="tesseract_monitoring" type="tesseract_monitoring_contacts_node" required="true">
-    <param name="monitor_namespace" type="string" value="tesseract_workcell_contact_monitor"/>
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)_contact_monitor"/>
     <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
     <param name="publish_markers" value="true"/>
     <param name="publish_environment" value="true"/>
   </node>
 
-  <!-- Launch RViz -->
-  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
-
-  <!-- Launch GUI to drive joints   -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 </launch>
