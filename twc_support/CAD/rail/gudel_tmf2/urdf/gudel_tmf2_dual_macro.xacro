@@ -1,18 +1,34 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
-  <xacro:macro name="gudel_tmf2_dual" params="prefix">
+  <xacro:macro name="gudel_tmf2_dual" params="prefix length">
     <!-- link list -->
     <link name="${prefix}base_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link.dae" />
+          <xacro:if value="${length == 5}">
+            <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link_05m.dae" />
+          </xacro:if>
+          <xacro:if value="${length == 10}">
+            <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link_10m.dae" />
+          </xacro:if>
+          <xacro:if value="${length == 12}">
+            <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link_12m.dae" />
+          </xacro:if>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link.dae" />
+          <xacro:if value="${length == 5}">
+            <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link_05m.dae" />
+          </xacro:if>
+          <xacro:if value="${length == 10}">
+            <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link_10m.dae" />
+          </xacro:if>
+          <xacro:if value="${length == 12}">
+            <mesh filename="package://twc_support/CAD/rail/gudel_tmf2/urdf/visual/base_link_12m.dae" />
+          </xacro:if>
         </geometry>
       </collision>
     </link>

@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="tesseract_workcell_positioner" params="prefix">
+    <xacro:include filename="$(find twc_support)/CAD/eoat/ati_qc110m/urdf/ati_qc110m_macro.xacro"/>
+    <xacro:ati_qc110m prefix="ati_qc110m_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/ati_qc110f/urdf/ati_qc110f_macro.xacro"/>
+    <xacro:ati_qc110f prefix="ati_qc110f_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/ati_9120_stand/urdf/ati_9120_stand_macro.xacro"/>
+    <xacro:ati_9120_stand prefix="ati_stand_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/ati_9120_tsm_mmb_8432/urdf/ati_9120_tsm_mmb_8432_macro.xacro"/>
+    <xacro:ati_9120_tsm_mmb_8432 prefix="ati_dock1_"/>
+    <xacro:ati_9120_tsm_mmb_8432 prefix="ati_dock2_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/ati_9120_tsm_hbq_9224/urdf/ati_9120_tsm_hbq_9224_macro.xacro"/>
+    <xacro:ati_9120_tsm_hbq_9224 prefix="ati_dock_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/pushcorp_afd620/urdf/pushcorp_afd620_macro.xacro"/>
+    <xacro:pushcorp_afd620 prefix="pushcorp_afd620_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/pushcorp_stc1015/urdf/pushcorp_stc1015_parallel_macro.xacro"/>
+    <xacro:pushcorp_stc1015_parallel prefix="pushcorp_stc1015_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/robot/abb_irbpa250_d1000/urdf/irbpa250_d1000_macro.xacro"/>
+    <xacro:abb_irbpa250_d1000 prefix="positioner_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/bt30_sander/urdf/bt30_sander_macro.xacro"/>
+    <xacro:bt30_sander prefix="st_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/robot/abb_irb4600_60_205/urdf/irb4600_60_205_macro.xacro"/>
+    <xacro:abb_irb4600_60_205 prefix="robot_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/pedestal/pedestal_750mm/urdf/pedestal_750mm_macro.xacro"/>
+    <xacro:pedestal_750mm prefix="pedestal_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/fence/panel_3m_2m_solid/urdf/panel_3m_2m_solid_macro.xacro"/>
+    <xacro:panel_3m_2m_solid prefix="fence_panel1_"/>
+    <xacro:panel_3m_2m_solid prefix="fence_panel2_"/>
+    <xacro:panel_3m_2m_solid prefix="fence_panel3_"/>
+    <xacro:panel_3m_2m_solid prefix="fence_panel4_"/>
+    <xacro:panel_3m_2m_solid prefix="fence_panel5_"/>
+    <xacro:panel_3m_2m_solid prefix="fence_panel6_"/>
+
+    <xacro:include filename="$(find twc_support)/CAD/logo/ros_industrial/urdf/ros_industrial_logo_macro.xacro"/>
+    <xacro:ros_industrial_logo prefix="logo_"/>
+
+    <!-- link list -->
+    <link name="${prefix}world" />
+    <link name="${prefix}tool_dock0" />
+    <link name="${prefix}part_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/meshes/fuselage_part.dae" />
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://twc_support/meshes/fuselage_part.ply" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- joint list -->
+    <joint name="${prefix}world_positioner_joint" type="fixed">
+      <origin xyz="0 0.25 0" rpy="0 0 1.5708" />
+      <parent link="${prefix}world" />
+      <child link="${prefix}positioner_base_link" />
+    </joint>
+
+    <joint name="${prefix}world_pedestal_joint" type="fixed">
+      <origin xyz="0 -1 0" rpy="0 0 1.5708" />
+      <parent link="${prefix}world" />
+      <child link="${prefix}pedestal_base_link" />
+    </joint>
+
+    <joint name="${prefix}pedestal_robot_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}pedestal_tool0" />
+      <child link="${prefix}robot_base_link" />
+    </joint>
+
+    <joint name="${prefix}world_ati_stand_joint" type="fixed">
+      <origin xyz="1.25 -1.25 0" rpy="0 0 1.5708" />
+      <parent link="${prefix}world" />
+      <child link="${prefix}ati_stand_base_link" />
+    </joint>
+
+    <joint name="${prefix}ati_stand_dock1_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}ati_stand_tool0" />
+      <child link="${prefix}ati_dock1_base_link" />
+    </joint>
+
+    <joint name="${prefix}ati_stand_dock2_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}ati_stand_tool1" />
+      <child link="${prefix}ati_dock2_base_link" />
+    </joint>
+
+    <joint name="${prefix}robot_ati_m_joint" type="fixed">
+<!--      <origin xyz="0 0 0.05" rpy="0 0.785398 3.14159" />-->
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}robot_tool0" />
+      <child link="${prefix}ati_qc110m_base_link" />
+    </joint>
+
+    <joint name="${prefix}world_tool_dock0_joint" type="fixed">
+      <origin xyz="-1 -1 1" rpy="-1.5708 -1.5708 -3.14" />
+      <parent link="${prefix}world" />
+      <child link="${prefix}tool_dock0" />
+    </joint>
+
+    <!--<joint name="${prefix}tool_dock0_ati_f_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}tool_dock0" />
+      <child link="${prefix}ati_f_base_link" />
+    </joint>-->
+
+    <joint name="${prefix}robot_ati_f_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}ati_qc110m_tool0" />
+      <child link="${prefix}ati_qc110f_base_link" />
+    </joint>
+
+    <joint name="${prefix}ati_m_pushcorp_ati_dock_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}ati_qc110f_tool0" />
+      <child link="${prefix}ati_dock_base_link" />
+    </joint>
+
+    <joint name="${prefix}ati_dock_pushcorp_afd_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}ati_dock_tool0" />
+      <child link="${prefix}pushcorp_afd620_base_link" />
+    </joint>
+
+    <joint name="${prefix}pushcorp_afd_stc_parallel_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}pushcorp_afd620_tool0" />
+      <child link="${prefix}pushcorp_stc1015_base_link" />
+    </joint>
+
+    <joint name="${prefix}positioner_part_joint" type="fixed">
+<!--      <origin xyz="-0.4 -1.1 -0.2" rpy="0 -0.523599 0" />-->
+      <origin xyz="-0.55 -1.1 0" rpy="0 0 0" />
+      <parent link="${prefix}positioner_tool0" />
+      <child link="${prefix}part_link" />
+    </joint>
+
+    <joint name="${prefix}bt30_sander_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}pushcorp_stc1015_tool0" />
+      <child link="${prefix}st_base_link" />
+    </joint>
+
+    <joint name="${prefix}fence_panel1_joint" type="fixed">
+      <origin xyz="-2.0 0 0" rpy="0 0 -1.5708" />
+      <parent link="${prefix}world" />
+      <child link="${prefix}fence_panel1_base_link" />
+    </joint>
+
+    <joint name="${prefix}fence_panel2_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 3.14159" />
+      <parent link="${prefix}fence_panel1_base_link" />
+      <child link="${prefix}fence_panel2_base_link" />
+    </joint>
+
+    <joint name="${prefix}fence_panel3_joint" type="fixed">
+      <origin xyz="0.025 -0.025 0" rpy="0 0 1.5708" />
+      <parent link="${prefix}fence_panel1_tool0" />
+      <child link="${prefix}fence_panel3_base_link" />
+    </joint>
+
+    <joint name="${prefix}fence_panel4_joint" type="fixed">
+      <origin xyz="0.025 -0.025 0" rpy="0 0 -1.5708" />
+      <parent link="${prefix}fence_panel2_tool0" />
+      <child link="${prefix}fence_panel4_base_link" />
+    </joint>
+
+    <joint name="${prefix}fence_panel5_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}fence_panel3_tool0" />
+      <child link="${prefix}fence_panel5_base_link" />
+    </joint>
+
+    <joint name="${prefix}fence_panel6_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}fence_panel4_tool0" />
+      <child link="${prefix}fence_panel6_base_link" />
+    </joint>
+
+    <joint name="${prefix}logo_joint" type="fixed">
+      <origin xyz="0.9 0 2.3" rpy="1.5708 0 3.14159" />
+      <parent link="${prefix}fence_panel1_base_link" />
+      <child link="${prefix}logo_base_link" />
+    </joint>
+
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

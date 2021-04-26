@@ -1,5 +1,0 @@
-<?xml version="1.0" ?>
-<robot name="gudel_tmf2_dual" xmlns:xacro="http://wiki.ros.org/xacro">
-  <xacro:include filename="$(find twc_support)/CAD/rail/gudel_tmf2/urdf/gudel_tmf2_dual_macro.xacro"/>
-  <xacro:gudel_tmf2_dual prefix=""/>
-</robot>

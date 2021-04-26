@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="rviz" default="true" />
+  <arg name="application" default="false" />
+
+  <!-- Tesseract Monitor Parameters -->
+  <arg name="robot_description" default="robot_description"/>
+  <arg name="discrete_plugin" default="BulletDiscreteBVHManager"/>
+  <arg name="continuous_plugin" default="BulletCastBVHManager"/>
+  <arg name="joint_state_topic" default=""/>
+  <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
+
+  <!-- Launch URDF and SRDF -->
+  <include file="$(find twc_support)/launch/load_workcell_rail.launch" />
+
+  <!-- Launch Application Base Nodes -->
+  <include file="$(find twc_application)/launch/application_base.launch">
+    <param name="rviz" type="bool" value="$(arg rviz)"/>
+    <param name="robot_description" type="string" value="$(arg robot_description)"/>
+    <param name="discrete_plugin" type="string" value="$(arg discrete_plugin)"/>
+    <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
+    <param name="joint_state_topic" type="string" value="$(arg joint_state_topic)"/>
+    <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)"/>
+  </include>
+
+  <!-- Launch Application Node -->
+  <node if="$(arg application)" name="twc_application_node" pkg="twc_application" type="twc_application_node" required="true">
+    <param name="tool_path" type="str" value="$(find twc_application)/config/job_path.yaml"/>
+  </node>
+</launch>
