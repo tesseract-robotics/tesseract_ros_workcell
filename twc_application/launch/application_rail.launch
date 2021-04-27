@@ -27,7 +27,12 @@
   <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
 
   <!-- Launch GUI to drive joints   -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <rosparam>
+      zeros:
+        rail_joint_1: 2.25
+    </rosparam>
+  </node>
 
   <!-- Launch Application Node -->
   <node if="$(arg application)" name="twc_application_node" pkg="twc_application" type="twc_application_node" required="true">

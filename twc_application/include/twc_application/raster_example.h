@@ -18,15 +18,17 @@ namespace twc
 /// \param yaml_filepath
 /// \return success
 ///
-inline bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raster_strips,
-                              const std::string& yaml_filepath)
+inline tesseract_common::Toolpath parsePathFromFile(const std::string& yaml_filepath,
+                                                    const Eigen::Isometry3d& pre_transform = Eigen::Isometry3d::Identity(),
+                                                    const Eigen::Isometry3d& post_transform = Eigen::Isometry3d::Identity())
 {
+  tesseract_common::Toolpath raster_strips;
+
   YAML::Node full_yaml_node = YAML::LoadFile(yaml_filepath);
   YAML::Node paths = full_yaml_node[0]["paths"];
-  std::double_t offset_strip = 0.0;
   for (YAML::const_iterator path_it = paths.begin(); path_it != paths.end(); ++path_it)
   {
-    std::vector<Eigen::Isometry3d> temp_poses;
+    tesseract_common::VectorIsometry3d temp_poses;
     YAML::Node strip = (*path_it)["poses"];
     for (YAML::const_iterator pose_it = strip.begin(); pose_it != strip.end(); ++pose_it)
     {
@@ -35,22 +37,19 @@ inline bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raste
       {
         Eigen::Isometry3d current_pose;
 
-        float x = pose["position"]["x"].as<float>();
-        float y = pose["position"]["y"].as<float>();
-        float z = pose["position"]["z"].as<float>();
+        double x = pose["position"]["x"].as<double>();
+        double y = pose["position"]["y"].as<double>();
+        double z = pose["position"]["z"].as<double>();
 
-        float qx = pose["orientation"]["x"].as<float>();
-        float qy = pose["orientation"]["y"].as<float>();
-        float qz = pose["orientation"]["z"].as<float>();
-        float qw = pose["orientation"]["w"].as<float>();
+        double qx = pose["orientation"]["x"].as<double>();
+        double qy = pose["orientation"]["y"].as<double>();
+        double qz = pose["orientation"]["z"].as<double>();
+        double qw = pose["orientation"]["w"].as<double>();
 
         current_pose.translation() = Eigen::Vector3d(x, y, z);
         current_pose.linear() = Eigen::Quaterniond(qw, qx, qy, qz).toRotationMatrix();
 
-        Eigen::Isometry3d offset_pose =
-            current_pose * Eigen::Translation3d(0.0, 0.0, offset_strip) * Eigen::Quaterniond(0, 1, 0, 0);
-
-        temp_poses.push_back(offset_pose);
+        temp_poses.push_back(pre_transform * current_pose * post_transform);
       }
       catch (YAML::InvalidNode& e)
       {
@@ -59,12 +58,12 @@ inline bool parsePathFromFile(std::vector<std::vector<Eigen::Isometry3d>>& raste
     }
     raster_strips.push_back(temp_poses);
   }
-  return true;
+  return raster_strips;
 }
 
-inline std::vector<std::vector<Eigen::Isometry3d>> filterPath(std::vector<std::vector<Eigen::Isometry3d>>& paths)
+inline tesseract_common::Toolpath filterPath(tesseract_common::Toolpath& paths)
 {
-  std::vector<std::vector<Eigen::Isometry3d>> filter_paths;
+  tesseract_common::Toolpath filter_paths;
 
   for (std::size_t i = 0; i < paths.size(); ++i)
   {
@@ -75,7 +74,7 @@ inline std::vector<std::vector<Eigen::Isometry3d>> filterPath(std::vector<std::v
     }
     else if (i < 5)
     {
-      std::vector<Eigen::Isometry3d> path;
+      tesseract_common::VectorIsometry3d path;
       for (std::size_t j = 0; j < paths[i].size(); ++j)
       {
         if (j < 2)
@@ -106,21 +105,24 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
   tesseract_msgs::GetMotionPlanGoal goal;
   goal.request.name = goal.request.RASTER_G_FT_PLANNER_NAME;
 
-  Eigen::Isometry3d rot_offset = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0, 0, 1));
-  Eigen::Isometry3d transform = current_transforms["part_link"];
-  std::vector<std::vector<Eigen::Isometry3d>> paths;
-  parsePathFromFile(paths, tool_path);
-  std::vector<std::vector<Eigen::Isometry3d>> raster_strips = filterPath(paths);
+  // Calculate offset
+  Eigen::Isometry3d post_transform = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) *
+                                     Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitZ()) *
+                                     Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
+  Eigen::Isometry3d pre_transform = current_transforms["part_link"];
+
+  tesseract_common::Toolpath paths = parsePathFromFile(tool_path, pre_transform, post_transform);
+  tesseract_common::Toolpath raster_strips = filterPath(paths);
 
   tesseract_planning::ManipulatorInfo manip_info("robot_only");
-  manip_info.tcp = tcp * rot_offset;
+  manip_info.tcp = tesseract_planning::ToolCenterPoint("st_tool0");
   tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
   // Start Joint Position for the program
   std::vector<std::string> joint_names = { "robot_joint_1", "robot_joint_2", "robot_joint_3",
                                            "robot_joint_4", "robot_joint_5", "robot_joint_6" };
   tesseract_planning::StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(6));
-  tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START);
+  tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START, "FREESPACE_ROBOT");
   program.setStartInstruction(start_instruction);
 
   for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
@@ -128,8 +130,8 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
     if (rs == 0)
     {
       // Define from start composite instruction
-      tesseract_planning::CartesianWaypoint wp1 = transform * raster_strips[rs][0];
-      tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE, "FREESPACE");
+      tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
+      tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE, "FREESPACE_ROBOT");
       plan_f0.setDescription("from_start_plan");
       tesseract_planning::CompositeInstruction from_start;
       from_start.setDescription("from_start");
@@ -143,8 +145,8 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
 
     for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
     {
-      tesseract_planning::CartesianWaypoint wp = transform * raster_strips[rs][i];
-      raster_segment.push_back(tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, "RASTER"));
+      tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
+      raster_segment.push_back(tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, "RASTER_ROBOT"));
     }
     program.push_back(raster_segment);
 
@@ -152,9 +154,9 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
     if (rs < raster_strips.size() - 1)
     {
       // Add transition
-      tesseract_planning::CartesianWaypoint twp = transform * raster_strips[rs + 1].front();
+      tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
 
-      tesseract_planning::PlanInstruction tranisiton_instruction1(twp, tesseract_planning::PlanInstructionType::FREESPACE, "TRANSITION");
+      tesseract_planning::PlanInstruction tranisiton_instruction1(twp, tesseract_planning::PlanInstructionType::FREESPACE, "TRANSITION_ROBOT");
       tranisiton_instruction1.setDescription("transition_from_end_plan");
 
       tesseract_planning::CompositeInstruction transition;
@@ -166,7 +168,7 @@ inline tesseract_msgs::GetMotionPlanGoal createRasterExampleGoal(std::string too
     else
     {
       // Add to end instruction
-      tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE, "FREESPACE");
+      tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE, "FREESPACE_ROBOT");
       plan_f2.setDescription("to_end_plan");
       tesseract_planning::CompositeInstruction to_end;
       to_end.setDescription("to_end");
