@@ -10,7 +10,7 @@
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_visualization/visualization_loader.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
-#include <tesseract_monitoring/tesseract_monitor_interface.h>
+#include <tesseract_monitoring/environment_monitor_interface.h>
 #include <tesseract_environment/ofkt/ofkt_state_solver.h>
 
 #include <twc_application/cartesian_example.h>
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
   ROS_INFO("Using tool path file: %s", tool_path.c_str());
 
   // Create a tesseract interface
-  tesseract_monitoring::TesseractMonitorInterface interface("tesseract_environment");
+  tesseract_monitoring::EnvironmentMonitorInterface interface("tesseract_environment");
   interface.addNamespace("tesseract_workcell_environment");
   if (!interface.wait())
   {
