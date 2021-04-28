@@ -16,8 +16,7 @@ enum class ProfileType
 
 inline bool isRobotConfigValid(tesseract_planning::RobotConfig config)
 {
-  if (config != tesseract_planning::RobotConfig::NUT && config != tesseract_planning::RobotConfig::FUT &&
-      config != tesseract_planning::RobotConfig::FDB && config != tesseract_planning::RobotConfig::NDB)
+  if (config != tesseract_planning::RobotConfig::NUT && config != tesseract_planning::RobotConfig::FUT)
     return false;
 
   return true;
@@ -34,12 +33,6 @@ inline bool isRobotConfigValid(tesseract_planning::RobotConfig start_config, tes
   if (start_config == tesseract_planning::RobotConfig::FUT && end_config == tesseract_planning::RobotConfig::NUT)
     return true;
 
-  if (start_config == tesseract_planning::RobotConfig::FDB && end_config == tesseract_planning::RobotConfig::NDB)
-    return true;
-
-  if (start_config == tesseract_planning::RobotConfig::NDB && end_config == tesseract_planning::RobotConfig::FDB)
-    return true;
-
   return false;
 }
 
@@ -54,10 +47,16 @@ public:
 
   bool operator()(const Eigen::Ref<const Eigen::VectorXd>& vertex) const override
   {
+    Eigen::Vector2i sign_correction(-1, 1);
     auto robot_config =
-        tesseract_planning::getRobotConfig<double>(robot_only_kin_, vertex.tail(robot_only_kin_->numJoints()));
+        tesseract_planning::getRobotConfig<double>(robot_only_kin_, vertex.tail(robot_only_kin_->numJoints()), sign_correction);
 
     if (!isRobotConfigValid(robot_config))
+      return false;
+
+    // Do not return redundant solutions
+    Eigen::VectorXi start_redun = tesseract_planning::getJointTurns<double>(vertex.tail(3));
+    if (start_redun != Eigen::Vector3i::Zero())
       return false;
 
     return tesseract_common::satisfiesPositionLimits(vertex, limits_);
@@ -80,10 +79,11 @@ public:
   std::pair<bool, FloatType> evaluate(const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& start,
                                       const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& end) const override
   {
-    auto start_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, start.tail(robot_only_kin_->numJoints()));
-    auto end_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, end.tail(robot_only_kin_->numJoints()));
-
     // Consider the edge:
+    Eigen::Vector2i sign_correction(-1, 1);
+    auto start_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, start.tail(robot_only_kin_->numJoints()), sign_correction);
+    auto end_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, end.tail(robot_only_kin_->numJoints()), sign_correction);
+
     if (isRobotConfigValid(start_config, end_config))
       return std::make_pair(true, FloatType(0));
 
