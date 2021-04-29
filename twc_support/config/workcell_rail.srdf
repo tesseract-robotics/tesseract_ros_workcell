@@ -10,7 +10,7 @@
         <chain base_link="robot_base_link" tip_link="robot_tool0"/>
     </group>
     <group name="rail_only">
-        <chain base_link="rail_base_link" tip_link="rail_tool0"/>
+        <chain base_link="rail_base_link" tip_link="robot_base_link"/>
     </group>
     <group name="manipulator">
         <chain base_link="rail_base_link" tip_link="robot_tool0"/>

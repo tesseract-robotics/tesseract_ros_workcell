@@ -68,7 +68,7 @@ using tesseract_planning::RasterTaskflow;
 
 const std::string ROBOT_DESCRIPTION_PARAM = "robot_description"; /**< Default ROS parameter for robot description */
 const double LONGEST_VALID_SEGMENT_LENGTH = 0.01;
-const double CONTACT_DISTANCE_THRESHOLD = 0.0;
+const double CONTACT_DISTANCE_THRESHOLD = 0.01;
 
 std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile>
 createTrajOptCompositeProfile(twc::ProfileType profile_type)
@@ -388,6 +388,8 @@ int main(int argc, char** argv)
   std::string monitored_namespace;
   bool publish_environment{ false };
   int threads = static_cast<int>(std::thread::hardware_concurrency());
+
+//  console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
   if (!pnh.getParam("monitor_namespace", monitor_namespace))
   {

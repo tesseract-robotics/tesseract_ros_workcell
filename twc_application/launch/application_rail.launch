@@ -3,6 +3,7 @@
 
   <arg name="rviz" default="true" />
   <arg name="application" default="false" />
+  <arg name="use_rail" default="false" />
 
   <!-- Tesseract Monitor Parameters -->
   <arg name="robot_description" default="robot_description"/>
@@ -10,6 +11,8 @@
   <arg name="continuous_plugin" default="BulletCastBVHManager"/>
   <arg name="joint_state_topic" default=""/>
   <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
+
+  <param name="use_rail" type="bool" value="$(arg use_rail)" />
 
   <!-- Launch URDF and SRDF -->
   <include file="$(find twc_support)/launch/load_workcell_rail.launch" />
@@ -36,6 +39,6 @@
 
   <!-- Launch Application Node -->
   <node if="$(arg application)" name="twc_application_node" pkg="twc_application" type="twc_application_node" required="true">
-    <param name="tool_path" type="str" value="$(find twc_application)/config/job_path.yaml"/>
+    <param name="toolpath" type="str" value="$(find twc_application)/config/job_path.yaml"/>
   </node>
 </launch>
