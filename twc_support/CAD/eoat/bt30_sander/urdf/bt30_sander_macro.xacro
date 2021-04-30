@@ -17,6 +17,7 @@
       </collision>
     </link>
     <link name="${prefix}tool0"/>
+    <link name="${prefix}tool0_offset"/>
     <!-- end of link list -->
 
     <!-- joint list -->
@@ -24,6 +25,12 @@
       <origin xyz="0 0 0.07328" rpy="0 0 0" />
       <parent link="${prefix}base_link" />
       <child link="${prefix}tool0" />
+    </joint>
+
+    <joint name="${prefix}joint_tool0_offset" type="fixed">
+      <origin xyz="0 0 0.05" rpy="0 0 0" />
+      <parent link="${prefix}tool0" />
+      <child link="${prefix}tool0_offset" />
     </joint>
     <!-- end of joint list -->
   </xacro:macro>
