@@ -1,0 +1,356 @@
+#include <twc_motion_planning/planning_server_defaults.h>
+#include <twc_motion_planning/utils.h>
+
+#include <tesseract_motion_planners/simple/profile/simple_planner_fixed_size_assign_plan_profile.h>
+#include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
+#include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
+#include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
+#include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
+
+#include <tesseract_process_managers/taskflow_generators/descartes_taskflow.h>
+#include <tesseract_process_managers/taskflow_generators/trajopt_taskflow.h>
+#include <tesseract_process_managers/taskflow_generators/freespace_taskflow.h>
+#include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
+#include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
+
+using tesseract_planning::ProfileDictionary;
+using tesseract_planning::OMPLPlanProfile;
+using tesseract_planning::OMPLDefaultPlanProfile;
+using tesseract_planning::TrajOptCompositeProfile;
+using tesseract_planning::TrajOptPlanProfile;
+using tesseract_planning::TrajOptDefaultCompositeProfile;
+using tesseract_planning::TrajOptDefaultPlanProfile;
+using tesseract_planning::DescartesPlanProfile;
+using tesseract_planning::DescartesDefaultPlanProfileD;
+using tesseract_planning::TaskflowGenerator;
+using tesseract_planning::DescartesTaskflow;
+using tesseract_planning::DescartesTaskflowParams;
+using tesseract_planning::TrajOptTaskflow;
+using tesseract_planning::TrajOptTaskflowParams;
+using tesseract_planning::FreespaceTaskflow;
+using tesseract_planning::FreespaceTaskflowParams;
+using tesseract_planning::RasterGlobalTaskflow;
+using tesseract_planning::RasterTaskflow;
+
+const double LONGEST_VALID_SEGMENT_LENGTH = 0.01;
+const double CONTACT_DISTANCE_THRESHOLD = 0.01;
+
+namespace twc
+{
+std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile>
+createTrajOptCompositeProfile(twc::ProfileType profile_type)
+{
+  auto trajopt_composite_profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
+  trajopt_composite_profile->longest_valid_segment_length = LONGEST_VALID_SEGMENT_LENGTH;
+  trajopt_composite_profile->collision_cost_config.enabled = true;
+  trajopt_composite_profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
+  trajopt_composite_profile->collision_cost_config.safety_margin = 2 * CONTACT_DISTANCE_THRESHOLD;
+  trajopt_composite_profile->collision_cost_config.coeff = 10;
+  trajopt_composite_profile->collision_constraint_config.enabled = true;
+  trajopt_composite_profile->collision_constraint_config.type = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
+  trajopt_composite_profile->collision_constraint_config.safety_margin = CONTACT_DISTANCE_THRESHOLD;
+  trajopt_composite_profile->collision_constraint_config.safety_margin_buffer = 2 * CONTACT_DISTANCE_THRESHOLD;
+  trajopt_composite_profile->collision_constraint_config.coeff = 1;
+  trajopt_composite_profile->smooth_velocities = false;
+  trajopt_composite_profile->smooth_accelerations = true;
+  trajopt_composite_profile->smooth_jerks = true;
+
+  Eigen::VectorXd joint_weights;
+  if (profile_type == twc::ProfileType::ROBOT_ONLY)
+  {
+    joint_weights = Eigen::VectorXd::Ones(6);
+  }
+  else if (profile_type == twc::ProfileType::ROBOT_ON_RAIL)
+  {
+    joint_weights = Eigen::VectorXd::Ones(7);
+    joint_weights[0] = 0.5;
+  }
+  else if (profile_type == twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER)
+  {
+    joint_weights = Eigen::VectorXd::Ones(9);
+  }
+
+  trajopt_composite_profile->velocity_coeff = 5 * joint_weights;
+  trajopt_composite_profile->acceleration_coeff = 10 * joint_weights;
+  trajopt_composite_profile->jerk_coeff = 15 * joint_weights;
+
+  return trajopt_composite_profile;
+}
+
+std::shared_ptr<tesseract_planning::TrajOptDefaultPlanProfile> createTrajOptPlanProfile(twc::ProfileType /*profile_type*/)
+{
+  auto trajopt_plan_profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
+
+  // Tool z-axis free
+  trajopt_plan_profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 10);
+  trajopt_plan_profile->cartesian_coeff(5) = 0;
+  trajopt_plan_profile->term_type = trajopt::TermType::TT_COST;
+
+  return trajopt_plan_profile;
+}
+
+std::shared_ptr<tesseract_planning::OMPLDefaultPlanProfile> createOMPLPlanProfile(twc::ProfileType profile_type)
+{
+  auto ompl_plan_profile = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
+  ompl_plan_profile->collision_check_config.collision_margin_override_type =
+      tesseract_collision::CollisionMarginOverrideType::OVERRIDE_DEFAULT_MARGIN;
+  ompl_plan_profile->collision_check_config.collision_margin_data =
+      tesseract_collision::CollisionMarginData(CONTACT_DISTANCE_THRESHOLD);
+  ompl_plan_profile->collision_check_config.longest_valid_segment_length = LONGEST_VALID_SEGMENT_LENGTH;
+  ompl_plan_profile->collision_check_config.type = tesseract_collision::CollisionEvaluatorType::DISCRETE;
+  ompl_plan_profile->planning_time = 120;
+
+  auto rrtc1 = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
+  rrtc1->range = 0.1;
+
+  auto rrtc2 = std::make_shared<tesseract_planning::RRTConnectConfigurator>();
+  rrtc2->range = 0.2;
+
+  auto est1 = std::make_shared<tesseract_planning::ESTConfigurator>();
+  est1->range = 0.1;
+  est1->goal_bias = 0.5;
+
+  auto est2 = std::make_shared<tesseract_planning::ESTConfigurator>();
+  est2->range = 0.1;
+  est2->goal_bias = 0.25;
+
+  auto est3 = std::make_shared<tesseract_planning::ESTConfigurator>();
+  est3->range = 0.1;
+  est3->goal_bias = 0.75;
+
+  ompl_plan_profile->planners.clear();
+  ompl_plan_profile->planners.push_back(rrtc1);
+  ompl_plan_profile->planners.push_back(rrtc1);
+  ompl_plan_profile->planners.push_back(rrtc1);
+  ompl_plan_profile->planners.push_back(rrtc2);
+  ompl_plan_profile->planners.push_back(rrtc2);
+  ompl_plan_profile->planners.push_back(rrtc2);
+  ompl_plan_profile->planners.push_back(est1);
+  ompl_plan_profile->planners.push_back(est2);
+  ompl_plan_profile->planners.push_back(est3);
+  ompl_plan_profile->planners.push_back(est1);
+  ompl_plan_profile->planners.push_back(est2);
+  ompl_plan_profile->planners.push_back(est3);
+
+  Eigen::VectorXd joint_weights;
+  if (profile_type == twc::ProfileType::ROBOT_ONLY)
+  {
+    joint_weights = Eigen::VectorXd::Ones(6);
+  }
+  else if (profile_type == twc::ProfileType::ROBOT_ON_RAIL)
+  {
+    joint_weights = Eigen::VectorXd::Ones(7);
+    joint_weights[0] = 0.5;
+  }
+  else if (profile_type == twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER)
+  {
+    joint_weights = Eigen::VectorXd::Ones(9);
+  }
+
+  ompl_plan_profile->state_sampler_allocator = [joint_weights](const ompl::base::StateSpace* space,
+                                                  const tesseract_planning::OMPLProblem& prob) {
+    const auto& limits = prob.manip_fwd_kin->getLimits().joint_limits;
+    return tesseract_planning::allocWeightedRealVectorStateSampler(space, joint_weights, limits);
+  };
+
+  return ompl_plan_profile;
+}
+
+std::shared_ptr<tesseract_planning::DescartesDefaultPlanProfile<float>>
+createDescartesPlanProfile(twc::ProfileType profile_type)
+{
+  auto descartes_plan_profile = std::make_shared<tesseract_planning::DescartesDefaultPlanProfile<float>>();
+  descartes_plan_profile->allow_collision = true;
+  descartes_plan_profile->vertex_collision_check_config.collision_margin_override_type =
+      tesseract_collision::CollisionMarginOverrideType::OVERRIDE_DEFAULT_MARGIN;
+  descartes_plan_profile->vertex_collision_check_config.collision_margin_data =
+      tesseract_collision::CollisionMarginData(1.5 * CONTACT_DISTANCE_THRESHOLD);
+  descartes_plan_profile->num_threads = static_cast<int>(std::thread::hardware_concurrency());
+
+  descartes_plan_profile->target_pose_sampler = [](const Eigen::Isometry3d& pose){return tesseract_planning::sampleToolZAxis(pose, M_PI_4); };
+
+  // Add Vertex Evaluator
+  descartes_plan_profile->vertex_evaluator = [](const tesseract_planning::DescartesProblem<float>& prob) {
+    auto kin = prob.env->getManipulatorManager()->getFwdKinematicSolver("robot_only");
+    return std::make_shared<twc::DescartesStateValidator>(prob.manip_fwd_kin->getLimits().joint_limits, kin);
+  };
+
+  Eigen::VectorXd joint_weights;
+  if (profile_type == twc::ProfileType::ROBOT_ONLY)
+  {
+    joint_weights = Eigen::VectorXd::Ones(6);
+  }
+  else if (profile_type == twc::ProfileType::ROBOT_ON_RAIL)
+  {
+    joint_weights = Eigen::VectorXd::Ones(7);
+    joint_weights[0] = 0.5;
+  }
+  else if (profile_type == twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER)
+  {
+    joint_weights = Eigen::VectorXd::Ones(9);
+  }
+
+  descartes_plan_profile->edge_evaluator = [joint_weights](const tesseract_planning::DescartesProblem<float>& prob) {
+        auto e = std::make_shared<descartes_light::CompoundEdgeEvaluator<float>>();
+        auto kin = prob.env->getManipulatorManager()->getFwdKinematicSolver("robot_only");
+
+        e->evaluators.push_back(std::make_shared<twc::RobotConfigEdgeEvaluator<float>>(kin));
+        e->evaluators.push_back(std::make_shared<twc::WeightedEuclideanDistanceEdgeEvaluator<float>>(joint_weights));
+        return e;
+      };
+
+  return descartes_plan_profile;
+}
+
+void loadTWCProfiles(tesseract_planning::ProcessPlanningServer& planning_server)
+{
+  ProfileDictionary::Ptr dict = planning_server.getProfiles();
+
+  { // Trajopt Composite Profiles
+    auto p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_ONLY);
+    dict->addProfile<TrajOptCompositeProfile>("FREESPACE_ROBOT", p);
+    dict->addProfile<TrajOptCompositeProfile>("TRANSITION_ROBOT", p);
+    dict->addProfile<TrajOptCompositeProfile>("RASTER_ROBOT", p);
+
+    p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_ON_RAIL);
+    dict->addProfile<TrajOptCompositeProfile>("FREESPACE_RAIL", p);
+    dict->addProfile<TrajOptCompositeProfile>("TRANSITION_RAIL", p);
+    dict->addProfile<TrajOptCompositeProfile>("RASTER_RAIL", p);
+
+    p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    dict->addProfile<TrajOptCompositeProfile>("FREESPACE_POSITIONER", p);
+    dict->addProfile<TrajOptCompositeProfile>("TRANSITION_POSITIONER", p);
+    dict->addProfile<TrajOptCompositeProfile>("RASTER_POSITIONER", p);
+  }
+
+  { // Trajopt Plan Profiles
+    auto p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_ONLY);
+    dict->addProfile<TrajOptPlanProfile>("FREESPACE_ROBOT", p);
+    dict->addProfile<TrajOptPlanProfile>("TRANSITION_ROBOT", p);
+    dict->addProfile<TrajOptPlanProfile>("RASTER_ROBOT", p);
+
+    p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
+    dict->addProfile<TrajOptPlanProfile>("FREESPACE_RAIL", p);
+    dict->addProfile<TrajOptPlanProfile>("TRANSITION_RAIL", p);
+    dict->addProfile<TrajOptPlanProfile>("RASTER_RAIL", p);
+
+    p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    dict->addProfile<TrajOptPlanProfile>("FREESPACE_POSITIONER", p);
+    dict->addProfile<TrajOptPlanProfile>("TRANSITION_POSITIONER", p);
+    dict->addProfile<TrajOptPlanProfile>("RASTER_POSITIONER", p);
+  }
+
+  { // OMPL Plan Profiles
+    auto p = createOMPLPlanProfile(twc::ProfileType::ROBOT_ONLY);
+    dict->addProfile<OMPLPlanProfile>("FREESPACE_ROBOT", p);
+    dict->addProfile<OMPLPlanProfile>("TRANSITION_ROBOT", p);
+    dict->addProfile<OMPLPlanProfile>("RASTER_ROBOT", p);
+
+    p = createOMPLPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
+    dict->addProfile<OMPLPlanProfile>("FREESPACE_RAIL", p);
+    dict->addProfile<OMPLPlanProfile>("TRANSITION_RAIL", p);
+    dict->addProfile<OMPLPlanProfile>("RASTER_RAIL", p);
+
+    p = createOMPLPlanProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    dict->addProfile<OMPLPlanProfile>("FREESPACE_POSITIONER", p);
+    dict->addProfile<OMPLPlanProfile>("TRANSITION_POSITIONER", p);
+    dict->addProfile<OMPLPlanProfile>("RASTER_POSITIONER", p);
+  }
+
+  { // Descartes Plan Profiles
+    auto p = createDescartesPlanProfile(twc::ProfileType::ROBOT_ONLY);
+    dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_ROBOT", p);
+    dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_ROBOT", p);
+    dict->addProfile<DescartesPlanProfile<float>>("RASTER_ROBOT", p);
+
+    p = createDescartesPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
+    dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_RAIL", p);
+    dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_RAIL", p);
+    dict->addProfile<DescartesPlanProfile<float>>("RASTER_RAIL", p);
+
+    p = createDescartesPlanProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_POSITIONER", p);
+    dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_POSITIONER", p);
+    dict->addProfile<DescartesPlanProfile<float>>("RASTER_POSITIONER", p);
+  }
+}
+
+
+TaskflowGenerator::UPtr createRasterDebugGenerator()
+{
+  tesseract_planning::DescartesTaskflowParams params;
+  params.enable_post_contact_discrete_check = false;
+  params.enable_post_contact_continuous_check = false;
+  params.enable_time_parameterization = true;
+
+  TaskflowGenerator::UPtr freespace_task = std::make_unique<DescartesTaskflow>(params);
+  TaskflowGenerator::UPtr transition_task = std::make_unique<DescartesTaskflow>(params);
+  TaskflowGenerator::UPtr raster_task = std::make_unique<DescartesTaskflow>(params);
+
+  return std::make_unique<RasterTaskflow>(std::move(freespace_task), std::move(transition_task), std::move(raster_task));
+}
+
+TaskflowGenerator::UPtr createRasterGlobalDebugGenerator()
+{
+  tesseract_planning::DescartesTaskflowParams params;
+  params.enable_post_contact_discrete_check = false;
+  params.enable_post_contact_continuous_check = false;
+  params.enable_time_parameterization = true;
+
+  return std::make_unique<tesseract_planning::DescartesTaskflow>(params);
+}
+
+TaskflowGenerator::UPtr createRasterGlobalNoPostCheckGenerator()
+{
+  tesseract_planning::DescartesTaskflowParams global_params;
+  global_params.enable_post_contact_discrete_check = false;
+  global_params.enable_post_contact_continuous_check = false;
+  global_params.enable_time_parameterization = false;
+  TaskflowGenerator::UPtr global_task = std::make_unique<DescartesTaskflow>(global_params);
+
+  tesseract_planning::FreespaceTaskflowParams freespace_params;
+  freespace_params.enable_post_contact_discrete_check = false;
+  freespace_params.enable_post_contact_continuous_check = false;
+  freespace_params.type = tesseract_planning::FreespaceTaskflowType::TRAJOPT_FIRST;
+  TaskflowGenerator::UPtr freespace_task = std::make_unique<tesseract_planning::FreespaceTaskflow>(freespace_params);
+
+  tesseract_planning::FreespaceTaskflowParams transition_params;
+  transition_params.enable_post_contact_discrete_check = false;
+  transition_params.enable_post_contact_continuous_check = false;
+  transition_params.type = tesseract_planning::FreespaceTaskflowType::TRAJOPT_FIRST;
+  TaskflowGenerator::UPtr transition_task = std::make_unique<tesseract_planning::FreespaceTaskflow>(transition_params);
+
+  tesseract_planning::TrajOptTaskflowParams raster_params;
+  raster_params.enable_post_contact_discrete_check = false;
+  raster_params.enable_post_contact_continuous_check = false;
+  TaskflowGenerator::UPtr raster_task = std::make_unique<tesseract_planning::TrajOptTaskflow>(raster_params);
+
+  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
+      std::move(global_task), std::move(freespace_task), std::move(transition_task), std::move(raster_task));
+}
+
+TaskflowGenerator::UPtr createRasterTrajOptGenerator()
+{
+  // Create Freespace and Transition Taskflows
+  FreespaceTaskflowParams fparams;
+  TaskflowGenerator::UPtr freespace_task = std::make_unique<FreespaceTaskflow>(fparams);
+  TaskflowGenerator::UPtr transition_task = std::make_unique<FreespaceTaskflow>(fparams);
+
+  // Create Raster Taskflow
+  tesseract_planning::TrajOptTaskflowParams raster_params;
+  TaskflowGenerator::UPtr raster_task = std::make_unique<tesseract_planning::TrajOptTaskflow>(raster_params);
+
+  return std::make_unique<RasterTaskflow>(
+      std::move(freespace_task), std::move(transition_task), std::move(raster_task));
+}
+
+void registerTWCProcessPlanners(tesseract_planning::ProcessPlanningServer& planning_server)
+{
+  planning_server.registerProcessPlanner("RasterTrajOpt", createRasterTrajOptGenerator());
+  planning_server.registerProcessPlanner("RasterDebug", createRasterDebugGenerator());
+  planning_server.registerProcessPlanner("RasterGDebug", createRasterGlobalDebugGenerator());
+  planning_server.registerProcessPlanner("RasterGNoPostCheckDebug", createRasterGlobalNoPostCheckGenerator());
+}
+}

@@ -3,7 +3,7 @@
 
 #include <tesseract_motion_planners/robot_config.h>
 #include <tesseract_motion_planners/descartes/descartes_vertex_evaluator.h>
-#include <descartes_light/interface/edge_evaluator.h>
+#include <descartes_light/core/edge_evaluator.h>
 
 namespace twc
 {

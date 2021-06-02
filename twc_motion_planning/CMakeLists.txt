@@ -19,6 +19,8 @@ find_package(tesseract_common REQUIRED)
 find_package(tesseract_collision REQUIRED)
 
 catkin_package(
+  LIBRARIES
+    ${PROJECT_NAME}_defaults
   CATKIN_DEPENDS
     tesseract_msgs
     tesseract_monitoring
@@ -32,11 +34,26 @@ catkin_package(
 # Load variable for clang tidy args, compiler options and cxx version
 tesseract_variables()
 
+add_library(${PROJECT_NAME}_defaults src/planning_server_defaults.cpp)
+target_link_libraries(${PROJECT_NAME}_defaults PUBLIC
+  tesseract::tesseract_process_managers
+  tesseract::tesseract_motion_planners_simple
+  tesseract::tesseract_motion_planners_descartes
+  tesseract::tesseract_motion_planners_ompl
+  tesseract::tesseract_motion_planners_trajopt)
+target_compile_options(${PROJECT_NAME}_defaults PUBLIC ${TESSERACT_COMPILE_OPTIONS})
+target_clang_tidy(${PROJECT_NAME}_defaults ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+target_cxx_version(${PROJECT_NAME}_defaults PUBLIC VERSION 17)
+target_include_directories(${PROJECT_NAME}_defaults PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:include>")
+
 add_executable(${PROJECT_NAME}_planning_server_node src/twc_planning_server_node.cpp)
 target_link_libraries(${PROJECT_NAME}_planning_server_node PRIVATE
   tesseract::tesseract_collision_core
   tesseract::tesseract_command_language
   tesseract::tesseract_process_managers
+  ${PROJECT_NAME}_defaults
   ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME}_planning_server_node PRIVATE ${TESSERACT_COMPILE_OPTIONS})
 target_clang_tidy(${PROJECT_NAME}_planning_server_node ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
@@ -52,7 +69,7 @@ install(DIRECTORY launch
 )
 
 install(
-  TARGETS ${PROJECT_NAME}_planning_server_node
+  TARGETS ${PROJECT_NAME}_defaults ${PROJECT_NAME}_planning_server_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
