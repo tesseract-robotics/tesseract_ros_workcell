@@ -3,7 +3,7 @@
 
 #include <tesseract_motion_planners/robot_config.h>
 #include <tesseract_motion_planners/descartes/descartes_vertex_evaluator.h>
-#include <descartes_light/interface/edge_evaluator.h>
+#include <descartes_light/core/edge_evaluator.h>
 
 namespace twc
 {
@@ -16,10 +16,7 @@ enum class ProfileType
 
 inline bool isRobotConfigValid(tesseract_planning::RobotConfig config)
 {
-  if (config != tesseract_planning::RobotConfig::NUT && config != tesseract_planning::RobotConfig::FUT)
-    return false;
-
-  return true;
+  return (config == tesseract_planning::RobotConfig::NUT || config == tesseract_planning::RobotConfig::FUT);
 }
 
 inline bool isRobotConfigValid(tesseract_planning::RobotConfig start_config, tesseract_planning::RobotConfig end_config)
@@ -72,17 +69,17 @@ class RobotConfigEdgeEvaluator : public descartes_light::EdgeEvaluator<FloatType
 {
 public:
   RobotConfigEdgeEvaluator(tesseract_kinematics::ForwardKinematics::ConstPtr robot_only_kin)
-    : robot_only_kin_(robot_only_kin)
+    : robot_only_kin_(std::move(robot_only_kin))
   {
   }
 
-  std::pair<bool, FloatType> evaluate(const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& start,
-                                      const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& end) const override
+  std::pair<bool, FloatType> evaluate(const descartes_light::State<FloatType>& start,
+                                      const descartes_light::State<FloatType>& end) const override
   {
     // Consider the edge:
     Eigen::Vector2i sign_correction(-1, 1);
-    auto start_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, start.tail(robot_only_kin_->numJoints()), sign_correction);
-    auto end_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, end.tail(robot_only_kin_->numJoints()), sign_correction);
+    auto start_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, start.values.tail(robot_only_kin_->numJoints()), sign_correction);
+    auto end_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, end.values.tail(robot_only_kin_->numJoints()), sign_correction);
 
     if (isRobotConfigValid(start_config, end_config))
       return std::make_pair(true, FloatType(0));
@@ -100,8 +97,8 @@ class WeightedEuclideanDistanceEdgeEvaluator : public descartes_light::EdgeEvalu
 public:
   WeightedEuclideanDistanceEdgeEvaluator(const Eigen::VectorXd& weights) : weights_(weights.cast<FloatType>()) {}
 
-  std::pair<bool, FloatType> evaluate(const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& start,
-                                      const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& end) const override
+  std::pair<bool, FloatType> evaluate(const descartes_light::State<FloatType>& start,
+                                      const descartes_light::State<FloatType>& end) const override
   {
     FloatType cost = (weights_.array() * (end - start).array().abs()).sum();
     return std::make_pair(true, cost);

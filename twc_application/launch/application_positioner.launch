@@ -3,6 +3,7 @@
 
   <arg name="rviz" default="true" />
   <arg name="application" default="false" />
+  <arg name="use_positioner" default="false" />
 
   <!-- Tesseract Monitor Parameters -->
   <arg name="robot_description" default="robot_description"/>

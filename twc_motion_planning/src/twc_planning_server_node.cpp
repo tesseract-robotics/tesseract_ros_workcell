@@ -36,7 +36,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
-#include <descartes_samplers/evaluators/compound_edge_evaluator.h>
+#include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 
 #include <tesseract_process_managers/taskflow_generators/descartes_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/trajopt_taskflow.h>

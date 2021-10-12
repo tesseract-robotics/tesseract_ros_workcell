@@ -36,6 +36,7 @@ public:
 
     // Get global parameter
     use_rail_ = nh.param<bool>("/use_rail", use_rail_);
+    use_positioner_ = nh.param<bool>("/use_positioner", use_positioner_);
   }
 
   void run() override
@@ -49,19 +50,20 @@ public:
     Eigen::Isometry3d post_transform = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) *
                                        Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitZ()) *
                                        Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
-    Eigen::Isometry3d pre_transform = current_transforms["part_link"];
+    Eigen::Isometry3d pre_transform = Eigen::Isometry3d::Identity();
 
     tesseract_common::Toolpath paths = parsePathFromFile(toolpath_, pre_transform, post_transform);
     tesseract_common::Toolpath raster_strips = filterPath(paths);
 
     std::string motion_group;
-    if (use_rail_)
+    if (use_rail_ || use_positioner_)
       motion_group = "manipulator";
     else
       motion_group = "robot_only";
 
     tesseract_planning::ManipulatorInfo manip_info(motion_group);
     manip_info.tcp = tesseract_planning::ToolCenterPoint("st_tool0");
+    manip_info.working_frame = "part_link";
 
     tesseract_planning::CompositeInstruction program = createProgram(manip_info, raster_strips);
 
@@ -107,6 +109,13 @@ public:
       transition_profile = "TRANSITION_RAIL";
       freespace_profile = "FREESPACE_RAIL";
       joint_names = { "rail_joint_1", "robot_joint_1", "robot_joint_2", "robot_joint_3", "robot_joint_4", "robot_joint_5", "robot_joint_6" };
+    }
+    else if (use_positioner_)
+    {
+      raster_profile = "RASTER_POSITIONER";
+      transition_profile = "TRANSITION_POSITIONER";
+      freespace_profile = "FREESPACE_POSITIONER";
+      joint_names = { "positioner_base_joint", "positioner_joint_1", "robot_joint_1", "robot_joint_2", "robot_joint_3", "robot_joint_4", "robot_joint_5", "robot_joint_6" };
     }
 
     tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
@@ -173,6 +182,7 @@ public:
 private:
   std::string toolpath_;
   bool use_rail_ {false};
+  bool use_positioner_ {false};
   actionlib::SimpleActionClient<tesseract_msgs::GetMotionPlanAction> ac_;
 };
 
