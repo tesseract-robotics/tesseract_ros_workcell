@@ -1,0 +1,62 @@
+kinematic_plugins:
+  inv_kin_plugins:
+    positioner_only:
+      KDLInvKinChainLMA:
+        class: KDLInvKinChainLMAFactory
+        default: true
+        config:
+          base_link: positioner_base_link
+          tip_link: positioner_tool0
+    rail_only:
+      KDLInvKinChainLMA:
+        class: KDLInvKinChainLMAFactory
+        default: true
+        config:
+          base_link: rail_base_link
+          tip_link: robot_base_link
+    robot_only:
+      OPWInvKin:
+        class: OPWInvKinFactory
+        default: true
+        config:
+          base_link: robot_base_link
+          tip_link: robot_tool0
+          params:
+            a1: 0.175
+            a2: -0.175
+            b: 0.00
+            c1: 0.495
+            c2: 0.9
+            c3: 0.96
+            c4: 0.135
+            offsets: [0, 0, -1.57079632679, 0, 0, 0]
+            sign_corrections: [1, 1, 1, 1, 1, 1]
+    manipulator:
+      ROPInvKin:
+        class: ROPInvKinFactory
+        default: true
+        config:
+          manipulator_reach: 2.3
+          positioner_sample_resolution:
+            - name: rail_joint_1
+              value: 0.1
+          positioner:
+            class: KDLFwdKinChainFactory
+            config:
+              base_link: rail_base_link
+              tip_link: robot_base_link
+          manipulator:
+            class: OPWInvKinFactory
+            config:
+              base_link: robot_base_link
+              tip_link: robot_tool0
+              params:
+                a1: 0.175
+                a2: -0.175
+                b: 0.00
+                c1: 0.495
+                c2: 0.9
+                c3: 0.96
+                c4: 0.135
+                offsets: [0, 0, -1.57079632679, 0, 0, 0]
+                sign_corrections: [1, 1, 1, 1, 1, 1]
