@@ -36,9 +36,13 @@ inline bool isRobotConfigValid(tesseract_planning::RobotConfig start_config, tes
 class DescartesStateValidator : public tesseract_planning::DescartesVertexEvaluator
 {
 public:
-  DescartesStateValidator(Eigen::MatrixX2d limits,
-                          tesseract_kinematics::ForwardKinematics::Ptr robot_only_kin)
-    : limits_(std::move(limits)), robot_only_kin_(std::move(robot_only_kin))
+  DescartesStateValidator(tesseract_kinematics::JointGroup::ConstPtr manip,
+                          std::string robot_base_link,
+                          std::string robot_tip_link)
+    : manip_(std::move(manip))
+    , robot_base_link_(std::move(robot_base_link))
+    , robot_tip_link_(std::move(robot_tip_link))
+    , limits_(manip_->getLimits().joint_limits)
   {
   }
 
@@ -46,7 +50,7 @@ public:
   {
     Eigen::Vector2i sign_correction(-1, 1);
     auto robot_config =
-        tesseract_planning::getRobotConfig<double>(robot_only_kin_, vertex.tail(robot_only_kin_->numJoints()), sign_correction);
+        tesseract_planning::getRobotConfig<double>(*manip_, robot_base_link_, robot_tip_link_, vertex.tail(6), sign_correction);
 
     if (!isRobotConfigValid(robot_config))
       return false;
@@ -60,16 +64,22 @@ public:
   }
 
 protected:
+  tesseract_kinematics::JointGroup::ConstPtr manip_{ nullptr };
+  std::string robot_base_link_;
+  std::string robot_tip_link_;
   Eigen::MatrixX2d limits_;
-  tesseract_kinematics::ForwardKinematics::Ptr robot_only_kin_{ nullptr };
 };
 
 template <typename FloatType>
 class RobotConfigEdgeEvaluator : public descartes_light::EdgeEvaluator<FloatType>
 {
 public:
-  RobotConfigEdgeEvaluator(tesseract_kinematics::ForwardKinematics::ConstPtr robot_only_kin)
-    : robot_only_kin_(std::move(robot_only_kin))
+  RobotConfigEdgeEvaluator(tesseract_kinematics::JointGroup::ConstPtr manip,
+                           std::string robot_base_link,
+                           std::string robot_tip_link)
+    : manip_(std::move(manip))
+    , robot_base_link_(std::move(robot_base_link))
+    , robot_tip_link_(std::move(robot_tip_link))
   {
   }
 
@@ -78,8 +88,8 @@ public:
   {
     // Consider the edge:
     Eigen::Vector2i sign_correction(-1, 1);
-    auto start_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, start.values.tail(robot_only_kin_->numJoints()), sign_correction);
-    auto end_config = tesseract_planning::getRobotConfig<FloatType>(robot_only_kin_, end.values.tail(robot_only_kin_->numJoints()), sign_correction);
+    auto start_config = tesseract_planning::getRobotConfig<FloatType>(*manip_, robot_base_link_, robot_tip_link_, start.values.tail(6), sign_correction);
+    auto end_config = tesseract_planning::getRobotConfig<FloatType>(*manip_, robot_base_link_, robot_tip_link_, end.values.tail(6), sign_correction);
 
     if (isRobotConfigValid(start_config, end_config))
       return std::make_pair(true, FloatType(0));
@@ -88,7 +98,9 @@ public:
   }
 
 protected:
-  tesseract_kinematics::ForwardKinematics::ConstPtr robot_only_kin_;
+  tesseract_kinematics::JointGroup::ConstPtr manip_;
+  std::string robot_base_link_;
+  std::string robot_tip_link_;
 };
 
 template <typename FloatType>

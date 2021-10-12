@@ -40,7 +40,13 @@ include_directories(
 
 add_executable(${PROJECT_NAME}_node src/application_node.cpp)
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node tesseract::tesseract_motion_planners_core tesseract::tesseract_visualization tesseract::tesseract_command_language tesseract::tesseract_environment_core tesseract::tesseract_environment_ofkt ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_node
+  tesseract::tesseract_motion_planners_core
+  tesseract::tesseract_visualization
+  tesseract::tesseract_command_language
+  tesseract::tesseract_environment
+  ${catkin_LIBRARIES}
+  ${YAML_CPP_LIBRARIES})
 
 install(
   TARGETS ${PROJECT_NAME}_node

@@ -28,7 +28,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <ros/ros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
-#include <tesseract_environment/core/environment.h>
+#include <tesseract_environment/environment.h>
 #include <tesseract_planning_server/tesseract_planning_server.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_fixed_size_assign_plan_profile.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
@@ -182,7 +182,7 @@ std::shared_ptr<tesseract_planning::OMPLDefaultPlanProfile> createOMPLPlanProfil
 
   ompl_plan_profile->state_sampler_allocator = [joint_weights](const ompl::base::StateSpace* space,
                                                   const tesseract_planning::OMPLProblem& prob) {
-    const auto& limits = prob.manip_fwd_kin->getLimits().joint_limits;
+    const auto& limits = prob.manip->getLimits().joint_limits;
     return tesseract_planning::allocWeightedRealVectorStateSampler(space, joint_weights, limits);
   };
 
@@ -204,8 +204,7 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
 
   // Add Vertex Evaluator
   descartes_plan_profile->vertex_evaluator = [](const tesseract_planning::DescartesProblem<float>& prob) {
-    auto kin = prob.env->getManipulatorManager()->getFwdKinematicSolver("robot_only");
-    return std::make_shared<twc::DescartesStateValidator>(prob.manip_fwd_kin->getLimits().joint_limits, kin);
+    return std::make_shared<twc::DescartesStateValidator>(prob.manip, "robot_base_link", "robot_tool0");
   };
 
   Eigen::VectorXd joint_weights;
@@ -225,9 +224,7 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
 
   descartes_plan_profile->edge_evaluator = [joint_weights](const tesseract_planning::DescartesProblem<float>& prob) {
         auto e = std::make_shared<descartes_light::CompoundEdgeEvaluator<float>>();
-        auto kin = prob.env->getManipulatorManager()->getFwdKinematicSolver("robot_only");
-
-        e->evaluators.push_back(std::make_shared<twc::RobotConfigEdgeEvaluator<float>>(kin));
+        e->evaluators.push_back(std::make_shared<twc::RobotConfigEdgeEvaluator<float>>(prob.manip, "robot_base_link", "robot_tool0"));
         e->evaluators.push_back(std::make_shared<twc::WeightedEuclideanDistanceEdgeEvaluator<float>>(joint_weights));
         return e;
       };

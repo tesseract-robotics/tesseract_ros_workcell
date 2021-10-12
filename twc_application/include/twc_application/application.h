@@ -1,7 +1,7 @@
 #ifndef TWC_APPLICATION_APPLICATION_H
 #define TWC_APPLICATION_APPLICATION_H
 
-#include <tesseract_environment/core/environment.h>
+#include <tesseract_environment/environment.h>
 #include <tesseract_visualization/visualization.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
 #include <tesseract_motion_planners/core/utils.h>
@@ -29,7 +29,7 @@ public:
   {
     if (plotter_ != nullptr && env_ != nullptr)
     {
-      tesseract_common::Toolpath tp = tesseract_planning::toToolpath(program, env_);
+      tesseract_common::Toolpath tp = tesseract_planning::toToolpath(program, *env_);
       plotter_->plotMarker(tesseract_visualization::ToolpathMarker(tp));
       plotter_->waitForInput("Preview Toolpath. Hit enter to continue!");
     }
@@ -42,11 +42,12 @@ public:
       const auto& ci = program.as<tesseract_planning::CompositeInstruction>();
       long num_wp = tesseract_planning::getMoveInstructionCount(ci);
 
-      tesseract_common::Toolpath tp = tesseract_planning::toToolpath(program, env_);
+      tesseract_common::Toolpath tp = tesseract_planning::toToolpath(program, *env_);
       plotter_->plotMarker(tesseract_visualization::ToolpathMarker(tp));
       plotter_->waitForInput("Preview Trajectory Toolpath. Hit enter to continue!");
 
-      plotter_->plotTrajectory(tesseract_planning::toJointTrajectory(ci), env_->getStateSolver());
+      auto state_solver = env_->getStateSolver();
+      plotter_->plotTrajectory(tesseract_planning::toJointTrajectory(ci), *state_solver);
       plotter_->waitForInput("Preview Trajectory. Hit enter to continue!");
     }
   }

@@ -18,7 +18,6 @@
 #include <tesseract_visualization/visualization_loader.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
 #include <tesseract_monitoring/environment_monitor_interface.h>
-#include <tesseract_environment/ofkt/ofkt_state_solver.h>
 
 namespace twc
 {
@@ -45,7 +44,7 @@ public:
     ROS_INFO("Waiting for action server to start.");
     ac_.waitForServer();  // will wait for infinite time
 
-    auto current_transforms = env_->getCurrentState()->link_transforms;
+    auto current_transforms = env_->getState().link_transforms;
 
     Eigen::Isometry3d post_transform = Eigen::Isometry3d::Identity() * Eigen::Translation3d(0, 0, 0.05) *
                                        Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitZ()) *
@@ -61,10 +60,7 @@ public:
     else
       motion_group = "robot_only";
 
-    tesseract_planning::ManipulatorInfo manip_info(motion_group);
-    manip_info.tcp = tesseract_planning::ToolCenterPoint("st_tool0");
-    manip_info.working_frame = "part_link";
-
+    tesseract_common::ManipulatorInfo manip_info(motion_group, "part_link", "st_tool0");
     tesseract_planning::CompositeInstruction program = createProgram(manip_info, raster_strips);
 
     // Plot Tool Path

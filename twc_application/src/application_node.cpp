@@ -5,13 +5,11 @@
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_visualization/visualization_loader.h>
 #include <tesseract_monitoring/environment_monitor_interface.h>
-#include <tesseract_environment/ofkt/ofkt_state_solver.h>
 
 #include <twc_application/raster_applicataion.h>
 
 using tesseract_environment::Environment;
 using tesseract_monitoring::EnvironmentMonitorInterface;
-using tesseract_environment::OFKTStateSolver;
 
 static const std::string TOOLPATH = "twc_toolpath";
 
@@ -25,12 +23,12 @@ int main(int argc, char** argv)
   interface.addNamespace("tesseract_workcell_environment");
   if (!interface.wait())
   {
-    ROS_ERROR("The monitor namespace 'tesseract_workcell_environment' is not avialable!");
+    ROS_ERROR("The monitor namespace 'tesseract_workcell_environment' is not available!");
     return 0;
   }
 
-  Environment::Ptr env = interface.getEnvironment<OFKTStateSolver>("tesseract_workcell_environment");
-  auto current_transforms = env->getCurrentState()->link_transforms;
+  Environment::Ptr env = interface.getEnvironment("tesseract_workcell_environment");
+  auto current_transforms = env->getState().link_transforms;
 
   // Dynamically load ignition visualizer if exist
   tesseract_visualization::VisualizationLoader loader;
@@ -39,14 +37,14 @@ int main(int argc, char** argv)
   if (plotter != nullptr && env != nullptr)
   {
     plotter->waitForConnection(3);
-    plotter->plotEnvironment(env);
+    plotter->plotEnvironment(*env);
   }
 
   if((plotter != nullptr && !plotter->isConnected()) || (plotter == nullptr && env != nullptr))
   {
     plotter = std::make_shared<tesseract_rosutils::ROSPlotting>();
     plotter->waitForConnection(3);
-    plotter->plotEnvironment(env);
+    plotter->plotEnvironment(*env);
   }
 
   plotter->waitForInput("Hit enter to run application!");
