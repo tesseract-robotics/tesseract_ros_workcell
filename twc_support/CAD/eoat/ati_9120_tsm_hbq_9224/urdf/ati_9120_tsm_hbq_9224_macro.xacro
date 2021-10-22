@@ -25,6 +25,7 @@
       <parent link="${prefix}base_link" />
       <child link="${prefix}tool0" />
     </joint>
+
     <!-- end of joint list -->
   </xacro:macro>
 </robot>

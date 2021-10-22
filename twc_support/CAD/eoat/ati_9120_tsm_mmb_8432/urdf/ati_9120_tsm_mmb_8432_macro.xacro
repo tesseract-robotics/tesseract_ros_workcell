@@ -17,14 +17,23 @@
       </collision>
     </link>
     <link name="${prefix}tool0"/>
+    <link name="${prefix}dock"/>
     <!-- end of link list -->
 
     <!-- joint list -->
     <joint name="${prefix}base_link_tool0" type="fixed">
-      <origin xyz="0 0.05398 0.01524" rpy="0 0 0" />
+      <origin xyz="0 0 0.03048" rpy="0 0 0" />
       <parent link="${prefix}base_link" />
       <child link="${prefix}tool0" />
     </joint>
+
+    <!-- joint list -->
+    <joint name="${prefix}base_link_dock" type="fixed">
+      <origin xyz="-0.09108 0 0.14835" rpy="-1.5708 0 -1.5708" />
+      <parent link="${prefix}tool0" />
+      <child link="${prefix}dock" />
+    </joint>
+
     <!-- end of joint list -->
   </xacro:macro>
 </robot>

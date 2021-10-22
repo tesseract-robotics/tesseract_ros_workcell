@@ -92,15 +92,16 @@ createTrajOptCompositeProfile(twc::ProfileType profile_type)
   if (profile_type == twc::ProfileType::ROBOT_ONLY)
   {
     joint_weights = Eigen::VectorXd::Ones(6);
+    joint_weights[3] = 5;
   }
   else if (profile_type == twc::ProfileType::ROBOT_ON_RAIL)
   {
     joint_weights = Eigen::VectorXd::Ones(7);
     joint_weights[0] = 0.5;
   }
-  else if (profile_type == twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER)
+  else if (profile_type == twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER)
   {
-    joint_weights = Eigen::VectorXd::Ones(9);
+    joint_weights = Eigen::VectorXd::Ones(8);
   }
 
   trajopt_composite_profile->velocity_coeff = 5 * joint_weights;
@@ -169,15 +170,16 @@ std::shared_ptr<tesseract_planning::OMPLDefaultPlanProfile> createOMPLPlanProfil
   if (profile_type == twc::ProfileType::ROBOT_ONLY)
   {
     joint_weights = Eigen::VectorXd::Ones(6);
+    joint_weights[3] = 5;
   }
   else if (profile_type == twc::ProfileType::ROBOT_ON_RAIL)
   {
     joint_weights = Eigen::VectorXd::Ones(7);
     joint_weights[0] = 0.5;
   }
-  else if (profile_type == twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER)
+  else if (profile_type == twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER)
   {
-    joint_weights = Eigen::VectorXd::Ones(9);
+    joint_weights = Eigen::VectorXd::Ones(8);
   }
 
   ompl_plan_profile->state_sampler_allocator = [joint_weights](const ompl::base::StateSpace* space,
@@ -211,15 +213,16 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
   if (profile_type == twc::ProfileType::ROBOT_ONLY)
   {
     joint_weights = Eigen::VectorXd::Ones(6);
+    joint_weights[3] = 5;
   }
   else if (profile_type == twc::ProfileType::ROBOT_ON_RAIL)
   {
     joint_weights = Eigen::VectorXd::Ones(7);
     joint_weights[0] = 0.5;
   }
-  else if (profile_type == twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER)
+  else if (profile_type == twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER)
   {
-    joint_weights = Eigen::VectorXd::Ones(9);
+    joint_weights = Eigen::VectorXd::Ones(8);
   }
 
   descartes_plan_profile->edge_evaluator = [joint_weights](const tesseract_planning::DescartesProblem<float>& prob) {
@@ -247,7 +250,7 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
     dict->addProfile<TrajOptCompositeProfile>("TRANSITION_RAIL", p);
     dict->addProfile<TrajOptCompositeProfile>("RASTER_RAIL", p);
 
-    p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
     dict->addProfile<TrajOptCompositeProfile>("FREESPACE_POSITIONER", p);
     dict->addProfile<TrajOptCompositeProfile>("TRANSITION_POSITIONER", p);
     dict->addProfile<TrajOptCompositeProfile>("RASTER_POSITIONER", p);
@@ -264,7 +267,7 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
     dict->addProfile<TrajOptPlanProfile>("TRANSITION_RAIL", p);
     dict->addProfile<TrajOptPlanProfile>("RASTER_RAIL", p);
 
-    p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
     dict->addProfile<TrajOptPlanProfile>("FREESPACE_POSITIONER", p);
     dict->addProfile<TrajOptPlanProfile>("TRANSITION_POSITIONER", p);
     dict->addProfile<TrajOptPlanProfile>("RASTER_POSITIONER", p);
@@ -281,7 +284,7 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
     dict->addProfile<OMPLPlanProfile>("TRANSITION_RAIL", p);
     dict->addProfile<OMPLPlanProfile>("RASTER_RAIL", p);
 
-    p = createOMPLPlanProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    p = createOMPLPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
     dict->addProfile<OMPLPlanProfile>("FREESPACE_POSITIONER", p);
     dict->addProfile<OMPLPlanProfile>("TRANSITION_POSITIONER", p);
     dict->addProfile<OMPLPlanProfile>("RASTER_POSITIONER", p);
@@ -298,7 +301,7 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
     dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_RAIL", p);
     dict->addProfile<DescartesPlanProfile<float>>("RASTER_RAIL", p);
 
-    p = createDescartesPlanProfile(twc::ProfileType::ROBOT_WITH_3AXIS_POSITIONER);
+    p = createDescartesPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
     dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_POSITIONER", p);
     dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_POSITIONER", p);
     dict->addProfile<DescartesPlanProfile<float>>("RASTER_POSITIONER", p);
@@ -386,7 +389,7 @@ int main(int argc, char** argv)
   bool publish_environment{ false };
   int threads = static_cast<int>(std::thread::hardware_concurrency());
 
-//  console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
+  console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
   if (!pnh.getParam("monitor_namespace", monitor_namespace))
   {

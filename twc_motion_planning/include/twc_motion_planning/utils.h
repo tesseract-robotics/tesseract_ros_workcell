@@ -11,7 +11,7 @@ enum class ProfileType
 {
   ROBOT_ONLY,
   ROBOT_ON_RAIL,
-  ROBOT_WITH_3AXIS_POSITIONER,
+  ROBOT_WITH_2AXIS_POSITIONER,
 };
 
 inline bool isRobotConfigValid(tesseract_planning::RobotConfig config)
@@ -50,7 +50,7 @@ public:
   {
     Eigen::Vector2i sign_correction(-1, 1);
     auto robot_config =
-        tesseract_planning::getRobotConfig<double>(*manip_, robot_base_link_, robot_tip_link_, vertex.tail(6), sign_correction);
+        tesseract_planning::getRobotConfig<double>(*manip_, robot_base_link_, robot_tip_link_, vertex, sign_correction);
 
     if (!isRobotConfigValid(robot_config))
       return false;
@@ -88,8 +88,8 @@ public:
   {
     // Consider the edge:
     Eigen::Vector2i sign_correction(-1, 1);
-    auto start_config = tesseract_planning::getRobotConfig<FloatType>(*manip_, robot_base_link_, robot_tip_link_, start.values.tail(6), sign_correction);
-    auto end_config = tesseract_planning::getRobotConfig<FloatType>(*manip_, robot_base_link_, robot_tip_link_, end.values.tail(6), sign_correction);
+    auto start_config = tesseract_planning::getRobotConfig<FloatType>(*manip_, robot_base_link_, robot_tip_link_, start.values, sign_correction);
+    auto end_config = tesseract_planning::getRobotConfig<FloatType>(*manip_, robot_base_link_, robot_tip_link_, end.values, sign_correction);
 
     if (isRobotConfigValid(start_config, end_config))
       return std::make_pair(true, FloatType(0));
