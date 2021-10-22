@@ -69,6 +69,7 @@ public:
     // Create motion planning goal request
     tesseract_msgs::GetMotionPlanGoal goal;
     goal.request.name = goal.request.RASTER_G_FT_PLANNER_NAME;
+//    goal.request.name = "RasterGDebug";
     goal.request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(program);
 
     // Send goal

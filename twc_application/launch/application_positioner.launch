@@ -12,6 +12,8 @@
   <arg name="joint_state_topic" default=""/>
   <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
 
+  <param name="use_positioner" type="bool" value="$(arg use_positioner)" />
+
   <!-- Launch URDF and SRDF -->
   <include file="$(find twc_support)/launch/load_workcell_positioner.launch" />
 

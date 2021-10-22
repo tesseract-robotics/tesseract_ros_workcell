@@ -47,8 +47,7 @@
     <xacro:ros_industrial_logo prefix="logo_"/>
 
     <!-- link list -->
-    <link name="${prefix}world" />
-    <link name="${prefix}tool_dock0" />
+    <link name="${prefix}world"/>
     <link name="${prefix}part_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
@@ -72,7 +71,7 @@
     </joint>
 
     <joint name="${prefix}world_pedestal_joint" type="fixed">
-      <origin xyz="0 -1 0" rpy="0 0 1.5708" />
+      <origin xyz="0 -1.5 0" rpy="0 0 1.5708" />
       <parent link="${prefix}world" />
       <child link="${prefix}pedestal_base_link" />
     </joint>
@@ -108,12 +107,6 @@
       <child link="${prefix}ati_qc110m_base_link" />
     </joint>
 
-    <joint name="${prefix}world_tool_dock0_joint" type="fixed">
-      <origin xyz="-1 -1 1" rpy="-1.5708 -1.5708 -3.14" />
-      <parent link="${prefix}world" />
-      <child link="${prefix}tool_dock0" />
-    </joint>
-
     <!--<joint name="${prefix}tool_dock0_ati_f_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="${prefix}tool_dock0" />
@@ -146,7 +139,7 @@
 
     <joint name="${prefix}positioner_part_joint" type="fixed">
 <!--      <origin xyz="-0.4 -1.1 -0.2" rpy="0 -0.523599 0" />-->
-      <origin xyz="-0.55 -1.1 0" rpy="0 0 0" />
+      <origin xyz="-0.55 -1.1 -0.2" rpy="0 0 0" />
       <parent link="${prefix}positioner_tool0" />
       <child link="${prefix}part_link" />
     </joint>
