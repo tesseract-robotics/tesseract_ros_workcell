@@ -17,6 +17,9 @@
     <!--Groups kinematic plugins -->
     <kinematics_plugin_config filename="package://twc_support/config/workcell_positioner_plugins.yaml"/>
 
+    <!--Contact Managers plugins -->
+    <contact_managers_plugin_config filename="package://twc_support/config/contact_manager_plugins.yaml"/>
+
     <disable_collisions link1="positioner_base_link" link2="robot_link_2" reason="Never"/>
     <disable_collisions link1="positioner_base_link" link2="robot_base_link" reason="Never"/>
     <disable_collisions link1="ati_dock2_base_link" link2="robot_link_2" reason="Never"/>
