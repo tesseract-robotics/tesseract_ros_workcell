@@ -399,12 +399,10 @@ int main(int argc, char** argv)
 
   pnh.param<std::string>("monitored_namespace", monitored_namespace, "");
   pnh.param<std::string>("robot_description", robot_description, ROBOT_DESCRIPTION_PARAM);
-  pnh.param<std::string>("discrete_plugin", discrete_plugin, "");
-  pnh.param<std::string>("continuous_plugin", continuous_plugin, "");
   pnh.param<bool>("publish_environment", publish_environment, publish_environment);
   pnh.param<int>("threads", threads, threads);
 
-  TesseractPlanningServer planning_server(robot_description, monitor_namespace, static_cast<std::size_t>(threads), discrete_plugin, continuous_plugin);
+  TesseractPlanningServer planning_server(robot_description, monitor_namespace, static_cast<std::size_t>(threads));
   loadTWCDefaultProfiles(planning_server);
 
   planning_server.getProcessPlanningServer().registerProcessPlanner("RasterTrajOpt", createRasterTrajOptGenerator());
