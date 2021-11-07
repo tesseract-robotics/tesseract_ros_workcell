@@ -38,11 +38,9 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 
-#include <tesseract_process_managers/taskflow_generators/descartes_taskflow.h>
-#include <tesseract_process_managers/taskflow_generators/trajopt_taskflow.h>
-#include <tesseract_process_managers/taskflow_generators/freespace_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
+#include <tesseract_process_managers/core/default_process_planners.h>
 
 #include <twc_motion_planning/utils.h>
 
@@ -57,12 +55,6 @@ using tesseract_planning::TrajOptDefaultPlanProfile;
 using tesseract_planning::DescartesPlanProfile;
 using tesseract_planning::DescartesDefaultPlanProfileD;
 using tesseract_planning::TaskflowGenerator;
-using tesseract_planning::DescartesTaskflow;
-using tesseract_planning::DescartesTaskflowParams;
-using tesseract_planning::TrajOptTaskflow;
-using tesseract_planning::TrajOptTaskflowParams;
-using tesseract_planning::FreespaceTaskflow;
-using tesseract_planning::FreespaceTaskflowParams;
 using tesseract_planning::RasterGlobalTaskflow;
 using tesseract_planning::RasterTaskflow;
 
@@ -310,67 +302,21 @@ void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
 
 TaskflowGenerator::UPtr createRasterDebugGenerator()
 {
-  tesseract_planning::DescartesTaskflowParams params;
-  params.enable_post_contact_discrete_check = false;
-  params.enable_post_contact_continuous_check = false;
-  params.enable_time_parameterization = true;
-
-  TaskflowGenerator::UPtr freespace_task = std::make_unique<DescartesTaskflow>(params);
-  TaskflowGenerator::UPtr transition_task = std::make_unique<DescartesTaskflow>(params);
-  TaskflowGenerator::UPtr raster_task = std::make_unique<DescartesTaskflow>(params);
+  TaskflowGenerator::UPtr freespace_task = tesseract_planning::createDescartesGenerator(false, false);
+  TaskflowGenerator::UPtr transition_task = tesseract_planning::createDescartesGenerator(false, false);
+  TaskflowGenerator::UPtr raster_task = tesseract_planning::createDescartesGenerator(false, false);
 
   return std::make_unique<RasterTaskflow>(std::move(freespace_task), std::move(transition_task), std::move(raster_task));
-}
-
-TaskflowGenerator::UPtr createRasterGlobalDebugGenerator()
-{
-  tesseract_planning::DescartesTaskflowParams params;
-  params.enable_post_contact_discrete_check = false;
-  params.enable_post_contact_continuous_check = false;
-  params.enable_time_parameterization = true;
-
-  return std::make_unique<tesseract_planning::DescartesTaskflow>(params);
-}
-
-TaskflowGenerator::UPtr createRasterGlobalNoPostCheckGenerator()
-{
-  tesseract_planning::DescartesTaskflowParams global_params;
-  global_params.enable_post_contact_discrete_check = false;
-  global_params.enable_post_contact_continuous_check = false;
-  global_params.enable_time_parameterization = false;
-  TaskflowGenerator::UPtr global_task = std::make_unique<DescartesTaskflow>(global_params);
-
-  tesseract_planning::FreespaceTaskflowParams freespace_params;
-  freespace_params.enable_post_contact_discrete_check = false;
-  freespace_params.enable_post_contact_continuous_check = false;
-  freespace_params.type = tesseract_planning::FreespaceTaskflowType::TRAJOPT_FIRST;
-  TaskflowGenerator::UPtr freespace_task = std::make_unique<tesseract_planning::FreespaceTaskflow>(freespace_params);
-
-  tesseract_planning::FreespaceTaskflowParams transition_params;
-  transition_params.enable_post_contact_discrete_check = false;
-  transition_params.enable_post_contact_continuous_check = false;
-  transition_params.type = tesseract_planning::FreespaceTaskflowType::TRAJOPT_FIRST;
-  TaskflowGenerator::UPtr transition_task = std::make_unique<tesseract_planning::FreespaceTaskflow>(transition_params);
-
-  tesseract_planning::TrajOptTaskflowParams raster_params;
-  raster_params.enable_post_contact_discrete_check = false;
-  raster_params.enable_post_contact_continuous_check = false;
-  TaskflowGenerator::UPtr raster_task = std::make_unique<tesseract_planning::TrajOptTaskflow>(raster_params);
-
-  return std::make_unique<tesseract_planning::RasterGlobalTaskflow>(
-      std::move(global_task), std::move(freespace_task), std::move(transition_task), std::move(raster_task));
 }
 
 TaskflowGenerator::UPtr createRasterTrajOptGenerator()
 {
   // Create Freespace and Transition Taskflows
-  FreespaceTaskflowParams fparams;
-  TaskflowGenerator::UPtr freespace_task = std::make_unique<FreespaceTaskflow>(fparams);
-  TaskflowGenerator::UPtr transition_task = std::make_unique<FreespaceTaskflow>(fparams);
+  TaskflowGenerator::UPtr freespace_task = tesseract_planning::createFreespaceGenerator(false);
+  TaskflowGenerator::UPtr transition_task = tesseract_planning::createFreespaceGenerator(false);
 
   // Create Raster Taskflow
-  tesseract_planning::TrajOptTaskflowParams raster_params;
-  TaskflowGenerator::UPtr raster_task = std::make_unique<tesseract_planning::TrajOptTaskflow>(raster_params);
+  TaskflowGenerator::UPtr raster_task = tesseract_planning::createTrajOptGenerator(false);
 
   return std::make_unique<RasterTaskflow>(
       std::move(freespace_task), std::move(transition_task), std::move(raster_task));
@@ -407,8 +353,7 @@ int main(int argc, char** argv)
 
   planning_server.getProcessPlanningServer().registerProcessPlanner("RasterTrajOpt", createRasterTrajOptGenerator());
   planning_server.getProcessPlanningServer().registerProcessPlanner("RasterDebug", createRasterDebugGenerator());
-  planning_server.getProcessPlanningServer().registerProcessPlanner("RasterGDebug", createRasterGlobalDebugGenerator());
-  planning_server.getProcessPlanningServer().registerProcessPlanner("RasterGNoPostCheckDebug", createRasterGlobalNoPostCheckGenerator());
+  planning_server.getProcessPlanningServer().registerProcessPlanner("RasterGDebug", tesseract_planning::createDescartesGenerator(true, false));
 
   if (publish_environment)
     planning_server.getEnvironmentMonitor().startPublishingEnvironment();
