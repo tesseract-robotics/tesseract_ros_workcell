@@ -41,6 +41,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
 #include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
 #include <tesseract_process_managers/core/default_process_planners.h>
+#include <tesseract_process_managers/core/default_task_namespaces.h>
 
 #include <twc_motion_planning/utils.h>
 
@@ -118,9 +119,9 @@ std::shared_ptr<tesseract_planning::TrajOptDefaultPlanProfile> createTrajOptPlan
 std::shared_ptr<tesseract_planning::OMPLDefaultPlanProfile> createOMPLPlanProfile(twc::ProfileType profile_type)
 {
   auto ompl_plan_profile = std::make_shared<tesseract_planning::OMPLDefaultPlanProfile>();
-  ompl_plan_profile->collision_check_config.collision_margin_override_type =
+  ompl_plan_profile->collision_check_config.contact_manager_config.margin_data_override_type =
       tesseract_collision::CollisionMarginOverrideType::OVERRIDE_DEFAULT_MARGIN;
-  ompl_plan_profile->collision_check_config.collision_margin_data =
+  ompl_plan_profile->collision_check_config.contact_manager_config.margin_data =
       tesseract_collision::CollisionMarginData(CONTACT_DISTANCE_THRESHOLD);
   ompl_plan_profile->collision_check_config.longest_valid_segment_length = LONGEST_VALID_SEGMENT_LENGTH;
   ompl_plan_profile->collision_check_config.type = tesseract_collision::CollisionEvaluatorType::DISCRETE;
@@ -188,9 +189,9 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
 {
   auto descartes_plan_profile = std::make_shared<tesseract_planning::DescartesDefaultPlanProfile<float>>();
   descartes_plan_profile->allow_collision = true;
-  descartes_plan_profile->vertex_collision_check_config.collision_margin_override_type =
+  descartes_plan_profile->vertex_collision_check_config.contact_manager_config.margin_data_override_type =
       tesseract_collision::CollisionMarginOverrideType::OVERRIDE_DEFAULT_MARGIN;
-  descartes_plan_profile->vertex_collision_check_config.collision_margin_data =
+  descartes_plan_profile->vertex_collision_check_config.contact_manager_config.margin_data =
       tesseract_collision::CollisionMarginData(1.5 * CONTACT_DISTANCE_THRESHOLD);
   descartes_plan_profile->num_threads = static_cast<int>(std::thread::hardware_concurrency());
 
@@ -229,74 +230,76 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
 
 void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
 {
+  using namespace tesseract_planning::profile_ns;
+
   ProfileDictionary::Ptr dict = planning_server.getProcessPlanningServer().getProfiles();
 
   { // Trajopt Composite Profiles
     auto p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<TrajOptCompositeProfile>("FREESPACE_ROBOT", p);
-    dict->addProfile<TrajOptCompositeProfile>("TRANSITION_ROBOT", p);
-    dict->addProfile<TrajOptCompositeProfile>("RASTER_ROBOT", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<TrajOptCompositeProfile>("FREESPACE_RAIL", p);
-    dict->addProfile<TrajOptCompositeProfile>("TRANSITION_RAIL", p);
-    dict->addProfile<TrajOptCompositeProfile>("RASTER_RAIL", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<TrajOptCompositeProfile>("FREESPACE_POSITIONER", p);
-    dict->addProfile<TrajOptCompositeProfile>("TRANSITION_POSITIONER", p);
-    dict->addProfile<TrajOptCompositeProfile>("RASTER_POSITIONER", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 
   { // Trajopt Plan Profiles
     auto p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<TrajOptPlanProfile>("FREESPACE_ROBOT", p);
-    dict->addProfile<TrajOptPlanProfile>("TRANSITION_ROBOT", p);
-    dict->addProfile<TrajOptPlanProfile>("RASTER_ROBOT", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<TrajOptPlanProfile>("FREESPACE_RAIL", p);
-    dict->addProfile<TrajOptPlanProfile>("TRANSITION_RAIL", p);
-    dict->addProfile<TrajOptPlanProfile>("RASTER_RAIL", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<TrajOptPlanProfile>("FREESPACE_POSITIONER", p);
-    dict->addProfile<TrajOptPlanProfile>("TRANSITION_POSITIONER", p);
-    dict->addProfile<TrajOptPlanProfile>("RASTER_POSITIONER", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 
   { // OMPL Plan Profiles
     auto p = createOMPLPlanProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<OMPLPlanProfile>("FREESPACE_ROBOT", p);
-    dict->addProfile<OMPLPlanProfile>("TRANSITION_ROBOT", p);
-    dict->addProfile<OMPLPlanProfile>("RASTER_ROBOT", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createOMPLPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<OMPLPlanProfile>("FREESPACE_RAIL", p);
-    dict->addProfile<OMPLPlanProfile>("TRANSITION_RAIL", p);
-    dict->addProfile<OMPLPlanProfile>("RASTER_RAIL", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createOMPLPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<OMPLPlanProfile>("FREESPACE_POSITIONER", p);
-    dict->addProfile<OMPLPlanProfile>("TRANSITION_POSITIONER", p);
-    dict->addProfile<OMPLPlanProfile>("RASTER_POSITIONER", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 
   { // Descartes Plan Profiles
     auto p = createDescartesPlanProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_ROBOT", p);
-    dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_ROBOT", p);
-    dict->addProfile<DescartesPlanProfile<float>>("RASTER_ROBOT", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createDescartesPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_RAIL", p);
-    dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_RAIL", p);
-    dict->addProfile<DescartesPlanProfile<float>>("RASTER_RAIL", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createDescartesPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<DescartesPlanProfile<float>>("FREESPACE_POSITIONER", p);
-    dict->addProfile<DescartesPlanProfile<float>>("TRANSITION_POSITIONER", p);
-    dict->addProfile<DescartesPlanProfile<float>>("RASTER_POSITIONER", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 }
 
