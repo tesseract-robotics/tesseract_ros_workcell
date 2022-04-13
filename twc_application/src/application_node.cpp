@@ -9,7 +9,7 @@
 #include <twc_application/raster_applicataion.h>
 
 using tesseract_environment::Environment;
-using tesseract_monitoring::EnvironmentMonitorInterface;
+using tesseract_monitoring::ROSEnvironmentMonitorInterface;
 
 static const std::string TOOLPATH = "twc_toolpath";
 
@@ -19,7 +19,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh, pnh("~");
 
   // Create a tesseract interface
-  EnvironmentMonitorInterface interface("tesseract_environment");
+  ROSEnvironmentMonitorInterface interface("tesseract_environment");
   interface.addNamespace("tesseract_workcell_environment");
   if (!interface.wait())
   {
