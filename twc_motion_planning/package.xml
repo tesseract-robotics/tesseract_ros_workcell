@@ -15,7 +15,7 @@
   <depend>tesseract_msgs</depend>
   <depend>tesseract_common</depend>
   <depend>tesseract_command_language</depend>
-  <depend>tesseract_process_managers</depend>
+  <depend>tesseract_task_composer</depend>
   <depend>tesseract_motion_planners</depend>
   <depend>tesseract_planning_server</depend>
   <depend>tesseract_collision</depend>

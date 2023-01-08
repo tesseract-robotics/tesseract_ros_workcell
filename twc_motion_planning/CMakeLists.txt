@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tesseract_command_language REQUIRED)
-find_package(tesseract_process_managers REQUIRED)
+find_package(tesseract_task_composer REQUIRED)
 find_package(tesseract_common REQUIRED)
 find_package(tesseract_collision REQUIRED)
 
@@ -36,7 +36,7 @@ add_executable(${PROJECT_NAME}_planning_server_node src/twc_planning_server_node
 target_link_libraries(${PROJECT_NAME}_planning_server_node PRIVATE
   tesseract::tesseract_collision_core
   tesseract::tesseract_command_language
-  tesseract::tesseract_process_managers
+  tesseract::tesseract_task_composer
   ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME}_planning_server_node PRIVATE ${TESSERACT_COMPILE_OPTIONS})
 target_clang_tidy(${PROJECT_NAME}_planning_server_node ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
