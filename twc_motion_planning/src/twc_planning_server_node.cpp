@@ -30,7 +30,6 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_environment/environment.h>
 #include <tesseract_planning_server/tesseract_planning_server.h>
-#include <tesseract_motion_planners/default_planner_namespaces.h>
 #include <tesseract_motion_planners/simple/profile/simple_planner_fixed_size_assign_plan_profile.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
@@ -38,9 +37,6 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_motion_planners/descartes/profile/descartes_default_plan_profile.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
-
-#include <tesseract_task_composer/nodes/raster_ft_global_pipeline_task.h>
-#include <tesseract_task_composer/nodes/raster_ft_pipeline_task.h>
 
 #include <twc_motion_planning/utils.h>
 
@@ -58,6 +54,12 @@ using tesseract_planning::DescartesDefaultPlanProfileD;
 const std::string ROBOT_DESCRIPTION_PARAM = "robot_description"; /**< Default ROS parameter for robot description */
 const double LONGEST_VALID_SEGMENT_LENGTH = 0.01;
 const double CONTACT_DISTANCE_THRESHOLD = 0.01;
+
+static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
+static const std::string TRAJOPT_IFOPT_DEFAULT_NAMESPACE = "TrajOptIfoptMotionPlannerTask";
+static const std::string OMPL_DEFAULT_NAMESPACE = "OMPLMotionPlannerTask";
+static const std::string DESCARTES_DEFAULT_NAMESPACE = "DescartesMotionPlannerTask";
+static const std::string SIMPLE_DEFAULT_NAMESPACE = "SimpleMotionPlannerTask";
 
 std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile>
 createTrajOptCompositeProfile(twc::ProfileType profile_type)
@@ -226,8 +228,6 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
 
 void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
 {
-  using namespace tesseract_planning::profile_ns;
-
   ProfileDictionary& dict = planning_server.getProfileDictionary();
 
   { // Trajopt Composite Profiles
@@ -311,10 +311,12 @@ int main(int argc, char** argv)
   std::string robot_description;
   std::string monitor_namespace;
   std::string monitored_namespace;
+  std::string task_composer_config;
+  std::string input_key;
+  std::string output_key;
   bool publish_environment{ false };
   int cache_size{ 5 };
   double cache_refresh_rate{ 0.1 };
-  int threads = static_cast<int>(std::thread::hardware_concurrency());
 
   console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
@@ -324,14 +326,29 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if (!pnh.getParam("input_key", input_key))
+  {
+    ROS_ERROR("Missing required parameter input_key!");
+    return 1;
+  }
+
+  if (!pnh.getParam("output_key", output_key))
+  {
+    ROS_ERROR("Missing required parameter output_key!");
+    return 1;
+  }
+
   pnh.param<std::string>("monitored_namespace", monitored_namespace, "");
   pnh.param<std::string>("robot_description", robot_description, ROBOT_DESCRIPTION_PARAM);
   pnh.param<bool>("publish_environment", publish_environment, publish_environment);
   pnh.param<int>("cache_size", cache_size, cache_size);
   pnh.param<double>("cache_refresh_rate", cache_refresh_rate, cache_refresh_rate);
-  pnh.param<int>("threads", threads, threads);
+  pnh.param<std::string>("task_composer_config", task_composer_config, task_composer_config);
 
-  planning_server = std::make_shared<TesseractPlanningServer>(robot_description, monitor_namespace, static_cast<std::size_t>(threads));
+  planning_server = std::make_shared<TesseractPlanningServer>(robot_description,
+                                                              input_key,
+                                                              output_key,
+                                                              monitor_namespace);
   loadTWCDefaultProfiles(*planning_server);
 
   planning_server->getEnvironmentCache().setCacheSize(cache_size);
@@ -341,6 +358,12 @@ int main(int argc, char** argv)
 
   if (!monitored_namespace.empty())
     planning_server->getEnvironmentMonitor().startMonitoringEnvironment(monitored_namespace);
+
+  if (!task_composer_config.empty())
+  {
+    tesseract_common::fs::path config(task_composer_config);
+    planning_server->getTaskComposerServer().loadConfig(config);
+  }
 
   ros::Timer update_cache = nh.createTimer(ros::Duration(cache_refresh_rate), updateCacheCallback);
 

@@ -7,6 +7,11 @@
   <arg name="continuous_plugin" default="BulletCastBVHManager"/>
   <arg name="joint_state_topic" default=""/>
   <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
+  <arg name="cache_size" default="5"/>
+  <arg name="cache_refresh_rate" default="0.1"/>
+  <arg name="task_composer_config" default="$(find tesseract_task_composer)/config/task_composer_plugins.yaml"/>
+  <arg name="input_key" default="input_data"/>
+  <arg name="output_key" default="output_data"/>
 
   <!-- Launch Tesseract Monitor -->
   <node pkg="tesseract_monitoring" type="tesseract_monitoring_environment_node" name="tesseract_environment_monitor" output="screen" required="true">
@@ -26,6 +31,11 @@
     <param name="continuous_plugin" type="string" value="$(arg continuous_plugin)"/>
     <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)_planning_server"/>
     <param name="monitored_namespace" type="string" value="$(arg monitor_namespace)"/>
+    <param name="cache_size" type="int" value="$(arg cache_size)"/>
+    <param name="cache_refresh_rate" type="double" value="$(arg cache_refresh_rate)"/>
+    <param name="task_composer_config" type="string" value="$(arg task_composer_config)"/>
+    <param name="input_key" type="string" value="$(arg input_key)"/>
+    <param name="output_key" type="string" value="$(arg output_key)"/>
   </node>
 
   <!-- Launch Tesseract Contact Monitor -->

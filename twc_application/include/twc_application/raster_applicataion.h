@@ -72,7 +72,7 @@ public:
 
     // Create motion planning goal request
     tesseract_msgs::GetMotionPlanGoal goal;
-    goal.request.name = goal.request.RASTER_FT_G_PIPELINE_NAME;
+    goal.request.name = "RasterFtPipeline";
 //    goal.request.name = "RasterGDebug";
     goal.request.instructions = tesseract_common::Serialization::toArchiveStringXML<tesseract_planning::InstructionPoly>(program);
 
@@ -122,8 +122,8 @@ public:
     tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
     tesseract_planning::StateWaypointPoly swp1 = tesseract_planning::StateWaypoint(joint_names, Eigen::VectorXd::Zero(joint_names.size()));
-    tesseract_planning::MoveInstruction start_instruction(swp1, tesseract_planning::MoveInstructionType::START, freespace_profile);
-    program.setStartInstruction(start_instruction);
+    tesseract_planning::MoveInstruction start_instruction(swp1, tesseract_planning::MoveInstructionType::FREESPACE, freespace_profile);
+    start_instruction.setDescription("Start Instruction");
 
     for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
     {
@@ -135,8 +135,9 @@ public:
         plan_f0.setDescription("from_start_plan");
         tesseract_planning::CompositeInstruction from_start(freespace_profile);
         from_start.setDescription("from_start");
+        from_start.appendMoveInstruction(start_instruction);
         from_start.appendMoveInstruction(plan_f0);
-        program.appendInstruction(from_start);
+        program.push_back(from_start);
       }
 
       // Define raster
@@ -148,7 +149,7 @@ public:
         tesseract_planning::CartesianWaypointPoly wp = tesseract_planning::CartesianWaypoint(raster_strips[rs][i]);
         raster_segment.appendMoveInstruction(tesseract_planning::MoveInstruction(wp, tesseract_planning::MoveInstructionType::LINEAR, raster_profile));
       }
-      program.appendInstruction(raster_segment);
+      program.push_back(raster_segment);
 
 
       if (rs < raster_strips.size() - 1)
@@ -162,7 +163,7 @@ public:
         transition.setDescription("transition_from_end");
         transition.appendMoveInstruction(tranisiton_instruction1);
 
-        program.appendInstruction(transition);
+        program.push_back(transition);
       }
       else
       {
@@ -172,7 +173,7 @@ public:
         tesseract_planning::CompositeInstruction to_end(freespace_profile);
         to_end.setDescription("to_end");
         to_end.appendMoveInstruction(plan_f2);
-        program.appendInstruction(to_end);
+        program.push_back(to_end);
       }
     }
 

@@ -27,8 +27,8 @@
   </include>
 
   <!-- Launch RViz -->
-  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
-
+<!--  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>-->
+<node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" output="screen" required="true"/>
   <!-- Launch GUI to drive joints   -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
