@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="bt30_grinder" params="prefix">
+    <xacro:property name="radius" value="0.15" />
+    <xacro:property name="thickness" value="0.007" />
+
+    <!-- link list -->
+    <link name="${prefix}base_link"/>
+    <link name="${prefix}grinder_link">
+      <visual>
+        <origin xyz="0 0 ${thickness/2.0}" rpy="0 0 0" />
+        <geometry>
+          <cylinder radius="${radius}" length="${thickness}"/>
+        </geometry>
+        <material name="Blue">
+          <color rgba="0.0 0.0 1.0 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${thickness/2.0}" rpy="0 0 0" />
+        <geometry>
+          <cylinder radius="${radius}" length="${thickness}"/>
+        </geometry>
+      </collision>
+    </link>
+    <link name="${prefix}tool0"/>
+    <link name="${prefix}tool0_offset"/>
+    <!-- end of link list -->
+
+    <xacro:include filename="$(find twc_support)/CAD/eoat/bt30/urdf/bt30_macro.xacro"/>
+    <xacro:bt30 prefix="${prefix}bt_"/>
+
+    <!-- joint list -->
+    <joint name="${prefix}joint_bt30" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}bt_base_link" />
+    </joint>
+
+    <joint name="${prefix}joint_grinder" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}bt_tool0" />
+      <child link="${prefix}grinder_link" />
+    </joint>
+
+    <joint name="${prefix}joint_tool0" type="fixed">
+      <origin xyz="0 0 ${thickness}" rpy="0 0 0" />
+      <parent link="${prefix}grinder_link" />
+      <child link="${prefix}tool0" />
+    </joint>
+
+    <joint name="${prefix}joint_tool0_offset" type="fixed">
+      <origin xyz="0 0 0.05" rpy="0 0 0" />
+      <parent link="${prefix}tool0" />
+      <child link="${prefix}tool0_offset" />
+    </joint>
+    <!-- end of joint list -->
+  </xacro:macro>
+</robot>

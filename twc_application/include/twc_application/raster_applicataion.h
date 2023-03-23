@@ -12,8 +12,12 @@
 #include <tesseract_msgs/GetMotionPlanAction.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/conversions.h>
-#include <tesseract_command_language/core/serialization.h>
-#include <tesseract_command_language/utils/utils.h>
+#include <tesseract_common/serialization.h>
+#include <tesseract_command_language/utils.h>
+#include <tesseract_command_language/move_instruction.h>
+#include <tesseract_command_language/cartesian_waypoint.h>
+#include <tesseract_command_language/state_waypoint.h>
+#include <tesseract_command_language/joint_waypoint.h>
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_visualization/visualization_loader.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
@@ -68,9 +72,9 @@ public:
 
     // Create motion planning goal request
     tesseract_msgs::GetMotionPlanGoal goal;
-    goal.request.name = goal.request.RASTER_G_FT_PLANNER_NAME;
+    goal.request.name = "RasterFtPipeline";
 //    goal.request.name = "RasterGDebug";
-    goal.request.instructions = tesseract_planning::Serialization::toArchiveStringXML<tesseract_planning::Instruction>(program);
+    goal.request.instructions = tesseract_common::Serialization::toArchiveStringXML<tesseract_planning::InstructionPoly>(program);
 
     // Send goal
     ac_.sendGoal(goal);
@@ -80,7 +84,7 @@ public:
     ROS_INFO("Action finished: %s", state.toString().c_str());
 
     auto result = ac_.getResult();
-    tesseract_planning::Instruction program_results = tesseract_planning::Serialization::fromArchiveStringXML<tesseract_planning::Instruction>(result->response.results);
+    tesseract_planning::InstructionPoly program_results = tesseract_common::Serialization::fromArchiveStringXML<tesseract_planning::InstructionPoly>(result->response.results);
 
     if (!result->response.successful)
     {
@@ -93,7 +97,7 @@ public:
     }
   }
 
-  tesseract_planning::CompositeInstruction createProgram(const tesseract_planning::ManipulatorInfo& manip_info, const tesseract_common::Toolpath& raster_strips)
+  tesseract_planning::CompositeInstruction createProgram(const tesseract_common::ManipulatorInfo& manip_info, const tesseract_common::Toolpath& raster_strips)
   {
 
     std::string raster_profile {"RASTER_ROBOT"};
@@ -117,21 +121,22 @@ public:
 
     tesseract_planning::CompositeInstruction program("raster_program", tesseract_planning::CompositeInstructionOrder::ORDERED, manip_info);
 
-    tesseract_planning::StateWaypoint swp1(joint_names, Eigen::VectorXd::Zero(joint_names.size()));
-    tesseract_planning::PlanInstruction start_instruction(swp1, tesseract_planning::PlanInstructionType::START, freespace_profile);
-    program.setStartInstruction(start_instruction);
+    tesseract_planning::StateWaypointPoly swp1 = tesseract_planning::StateWaypoint(joint_names, Eigen::VectorXd::Zero(joint_names.size()));
+    tesseract_planning::MoveInstruction start_instruction(swp1, tesseract_planning::MoveInstructionType::FREESPACE, freespace_profile);
+    start_instruction.setDescription("Start Instruction");
 
     for (std::size_t rs = 0; rs < raster_strips.size(); ++rs)
     {
       if (rs == 0)
       {
         // Define from start composite instruction
-        tesseract_planning::CartesianWaypoint wp1 = raster_strips[rs][0];
-        tesseract_planning::PlanInstruction plan_f0(wp1, tesseract_planning::PlanInstructionType::FREESPACE, freespace_profile);
+        tesseract_planning::CartesianWaypointPoly wp1 = tesseract_planning::CartesianWaypoint(raster_strips[rs][0]);
+        tesseract_planning::MoveInstruction plan_f0(wp1, tesseract_planning::MoveInstructionType::FREESPACE, freespace_profile);
         plan_f0.setDescription("from_start_plan");
         tesseract_planning::CompositeInstruction from_start(freespace_profile);
         from_start.setDescription("from_start");
-        from_start.push_back(plan_f0);
+        from_start.appendMoveInstruction(start_instruction);
+        from_start.appendMoveInstruction(plan_f0);
         program.push_back(from_start);
       }
 
@@ -141,8 +146,8 @@ public:
 
       for (std::size_t i = 1; i < raster_strips[rs].size(); ++i)
       {
-        tesseract_planning::CartesianWaypoint wp = raster_strips[rs][i];
-        raster_segment.push_back(tesseract_planning::PlanInstruction(wp, tesseract_planning::PlanInstructionType::LINEAR, raster_profile));
+        tesseract_planning::CartesianWaypointPoly wp = tesseract_planning::CartesianWaypoint(raster_strips[rs][i]);
+        raster_segment.appendMoveInstruction(tesseract_planning::MoveInstruction(wp, tesseract_planning::MoveInstructionType::LINEAR, raster_profile));
       }
       program.push_back(raster_segment);
 
@@ -150,25 +155,24 @@ public:
       if (rs < raster_strips.size() - 1)
       {
         // Add transition
-        tesseract_planning::CartesianWaypoint twp = raster_strips[rs + 1].front();
-
-        tesseract_planning::PlanInstruction tranisiton_instruction1(twp, tesseract_planning::PlanInstructionType::FREESPACE, transition_profile);
+        tesseract_planning::CartesianWaypointPoly twp = tesseract_planning::CartesianWaypoint(raster_strips[rs + 1].front());
+        tesseract_planning::MoveInstruction tranisiton_instruction1(twp, tesseract_planning::MoveInstructionType::FREESPACE, transition_profile);
         tranisiton_instruction1.setDescription("transition_from_end_plan");
 
         tesseract_planning::CompositeInstruction transition(transition_profile);
         transition.setDescription("transition_from_end");
-        transition.push_back(tranisiton_instruction1);
+        transition.appendMoveInstruction(tranisiton_instruction1);
 
         program.push_back(transition);
       }
       else
       {
         // Add to end instruction
-        tesseract_planning::PlanInstruction plan_f2(swp1, tesseract_planning::PlanInstructionType::FREESPACE, freespace_profile);
+        tesseract_planning::MoveInstruction plan_f2(swp1, tesseract_planning::MoveInstructionType::FREESPACE, freespace_profile);
         plan_f2.setDescription("to_end_plan");
         tesseract_planning::CompositeInstruction to_end(freespace_profile);
         to_end.setDescription("to_end");
-        to_end.push_back(plan_f2);
+        to_end.appendMoveInstruction(plan_f2);
         program.push_back(to_end);
       }
     }

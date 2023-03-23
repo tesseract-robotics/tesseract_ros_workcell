@@ -2,7 +2,8 @@
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
   <xacro:macro name="bt30_sander" params="prefix">
     <!-- link list -->
-    <link name="${prefix}base_link">
+    <link name="${prefix}base_link"/>
+    <link name="${prefix}sander_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
@@ -20,10 +21,25 @@
     <link name="${prefix}tool0_offset"/>
     <!-- end of link list -->
 
+    <xacro:include filename="$(find twc_support)/CAD/eoat/bt30/urdf/bt30_macro.xacro"/>
+    <xacro:bt30 prefix="${prefix}bt_"/>
+
     <!-- joint list -->
-    <joint name="${prefix}joint_tool0" type="fixed">
-      <origin xyz="0 0 0.07328" rpy="0 0 0" />
+    <joint name="${prefix}joint_bt30" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="${prefix}base_link" />
+      <child link="${prefix}bt_base_link" />
+    </joint>
+
+    <joint name="${prefix}joint_sander" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="${prefix}bt_tool0" />
+      <child link="${prefix}sander_link" />
+    </joint>
+
+    <joint name="${prefix}joint_tool0" type="fixed">
+      <origin xyz="0 0 0.0253" rpy="0 0 0" />
+      <parent link="${prefix}sander_link" />
       <child link="${prefix}tool0" />
     </joint>
 

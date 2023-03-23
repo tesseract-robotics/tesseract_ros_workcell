@@ -6,6 +6,9 @@
   <arg name="discrete_plugin" default="BulletDiscreteBVHManager"/>
   <arg name="continuous_plugin" default="BulletCastBVHManager"/>
   <arg name="publish_environment" default="false"/>
+  <arg name="task_composer_config" default="$(find tesseract_task_composer)/config/task_composer_plugins.yaml"/>
+  <arg name="input_key" default="input_data"/>
+  <arg name="output_key" default="output_data"/>
 
   <node pkg="twc_motion_planning" type="twc_motion_planning_planning_server_node" name="twc_planning_server" output="screen">
     <param name="robot_description" type="string" value="$(arg robot_description)"/>
@@ -14,6 +17,9 @@
     <param name="monitor_namespace" type="string" value="$(arg monitor_namespace)"/>
     <param name="monitored_namespace" type="string" value="$(arg monitored_namespace)"/>
     <param name="publish_environment" type="bool" value="$(arg publish_environment)"/>
+    <param name="task_composer_config" type="string" value="$(arg task_composer_config)"/>
+    <param name="input_key" type="string" value="$(arg input_key)"/>
+    <param name="output_key" type="string" value="$(arg output_key)"/>
   </node>
 
 </launch>

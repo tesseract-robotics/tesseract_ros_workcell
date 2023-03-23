@@ -60,7 +60,7 @@ public:
     if (start_redun != Eigen::Vector3i::Zero())
       return false;
 
-    return tesseract_common::satisfiesPositionLimits(vertex, limits_);
+    return tesseract_common::satisfiesPositionLimits<double>(vertex, limits_);
   }
 
 protected:

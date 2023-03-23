@@ -38,11 +38,6 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
 
-#include <tesseract_process_managers/taskflow_generators/raster_global_taskflow.h>
-#include <tesseract_process_managers/taskflow_generators/raster_taskflow.h>
-#include <tesseract_process_managers/core/default_process_planners.h>
-#include <tesseract_process_managers/core/default_task_namespaces.h>
-
 #include <twc_motion_planning/utils.h>
 
 using tesseract_planning_server::TesseractPlanningServer;
@@ -55,13 +50,16 @@ using tesseract_planning::TrajOptDefaultCompositeProfile;
 using tesseract_planning::TrajOptDefaultPlanProfile;
 using tesseract_planning::DescartesPlanProfile;
 using tesseract_planning::DescartesDefaultPlanProfileD;
-using tesseract_planning::TaskflowGenerator;
-using tesseract_planning::RasterGlobalTaskflow;
-using tesseract_planning::RasterTaskflow;
 
 const std::string ROBOT_DESCRIPTION_PARAM = "robot_description"; /**< Default ROS parameter for robot description */
 const double LONGEST_VALID_SEGMENT_LENGTH = 0.01;
 const double CONTACT_DISTANCE_THRESHOLD = 0.01;
+
+static const std::string TRAJOPT_DEFAULT_NAMESPACE = "TrajOptMotionPlannerTask";
+static const std::string TRAJOPT_IFOPT_DEFAULT_NAMESPACE = "TrajOptIfoptMotionPlannerTask";
+static const std::string OMPL_DEFAULT_NAMESPACE = "OMPLMotionPlannerTask";
+static const std::string DESCARTES_DEFAULT_NAMESPACE = "DescartesMotionPlannerTask";
+static const std::string SIMPLE_DEFAULT_NAMESPACE = "SimpleMotionPlannerTask";
 
 std::shared_ptr<tesseract_planning::TrajOptDefaultCompositeProfile>
 createTrajOptCompositeProfile(twc::ProfileType profile_type)
@@ -230,113 +228,95 @@ createDescartesPlanProfile(twc::ProfileType profile_type)
 
 void loadTWCDefaultProfiles(TesseractPlanningServer& planning_server)
 {
-  using namespace tesseract_planning::profile_ns;
-
-  ProfileDictionary::Ptr dict = planning_server.getProcessPlanningServer().getProfiles();
+  ProfileDictionary& dict = planning_server.getProfileDictionary();
 
   { // Trajopt Composite Profiles
     auto p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createTrajOptCompositeProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
-    dict->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict.addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 
   { // Trajopt Plan Profiles
     auto p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createTrajOptPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
-    dict->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict.addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 
   { // OMPL Plan Profiles
     auto p = createOMPLPlanProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createOMPLPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createOMPLPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
-    dict->addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict.addProfile<OMPLPlanProfile>(OMPL_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 
   { // Descartes Plan Profiles
     auto p = createDescartesPlanProfile(twc::ProfileType::ROBOT_ONLY);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_ROBOT", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_ROBOT", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_ROBOT", p);
 
     p = createDescartesPlanProfile(twc::ProfileType::ROBOT_ON_RAIL);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_RAIL", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_RAIL", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_RAIL", p);
 
     p = createDescartesPlanProfile(twc::ProfileType::ROBOT_WITH_2AXIS_POSITIONER);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
-    dict->addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "FREESPACE_POSITIONER", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "TRANSITION_POSITIONER", p);
+    dict.addProfile<DescartesPlanProfile<float>>(DESCARTES_DEFAULT_NAMESPACE, "RASTER_POSITIONER", p);
   }
 }
 
-TaskflowGenerator::UPtr createRasterDebugGenerator()
-{
-  TaskflowGenerator::UPtr freespace_task = tesseract_planning::createDescartesGenerator(false, false);
-  TaskflowGenerator::UPtr transition_task = tesseract_planning::createDescartesGenerator(false, false);
-  TaskflowGenerator::UPtr raster_task = tesseract_planning::createDescartesGenerator(false, false);
+static std::shared_ptr<TesseractPlanningServer> planning_server;
 
-  return std::make_unique<RasterTaskflow>(std::move(freespace_task), std::move(transition_task), std::move(raster_task));
-}
-
-TaskflowGenerator::UPtr createRasterTrajOptGenerator()
-{
-  // Create Freespace and Transition Taskflows
-  TaskflowGenerator::UPtr freespace_task = tesseract_planning::createFreespaceGenerator(false);
-  TaskflowGenerator::UPtr transition_task = tesseract_planning::createFreespaceGenerator(false);
-
-  // Create Raster Taskflow
-  TaskflowGenerator::UPtr raster_task = tesseract_planning::createTrajOptGenerator(false);
-
-  return std::make_unique<RasterTaskflow>(
-      std::move(freespace_task), std::move(transition_task), std::move(raster_task));
-}
+void updateCacheCallback(const ros::TimerEvent&) { planning_server->getEnvironmentCache().refreshCache(); }
 
 int main(int argc, char** argv)
 {
-
   ros::init(argc, argv, "twc_planning_server");
+  ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
   std::string robot_description;
-  std::string discrete_plugin;
-  std::string continuous_plugin;
   std::string monitor_namespace;
   std::string monitored_namespace;
+  std::string task_composer_config;
+  std::string input_key;
+  std::string output_key;
   bool publish_environment{ false };
-  int threads = static_cast<int>(std::thread::hardware_concurrency());
+  int cache_size{ 5 };
+  double cache_refresh_rate{ 0.1 };
 
   console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
 
@@ -346,23 +326,46 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if (!pnh.getParam("input_key", input_key))
+  {
+    ROS_ERROR("Missing required parameter input_key!");
+    return 1;
+  }
+
+  if (!pnh.getParam("output_key", output_key))
+  {
+    ROS_ERROR("Missing required parameter output_key!");
+    return 1;
+  }
+
   pnh.param<std::string>("monitored_namespace", monitored_namespace, "");
   pnh.param<std::string>("robot_description", robot_description, ROBOT_DESCRIPTION_PARAM);
   pnh.param<bool>("publish_environment", publish_environment, publish_environment);
-  pnh.param<int>("threads", threads, threads);
+  pnh.param<int>("cache_size", cache_size, cache_size);
+  pnh.param<double>("cache_refresh_rate", cache_refresh_rate, cache_refresh_rate);
+  pnh.param<std::string>("task_composer_config", task_composer_config, task_composer_config);
 
-  TesseractPlanningServer planning_server(robot_description, monitor_namespace, static_cast<std::size_t>(threads));
-  loadTWCDefaultProfiles(planning_server);
+  planning_server = std::make_shared<TesseractPlanningServer>(robot_description,
+                                                              input_key,
+                                                              output_key,
+                                                              monitor_namespace);
+  loadTWCDefaultProfiles(*planning_server);
 
-  planning_server.getProcessPlanningServer().registerProcessPlanner("RasterTrajOpt", createRasterTrajOptGenerator());
-  planning_server.getProcessPlanningServer().registerProcessPlanner("RasterDebug", createRasterDebugGenerator());
-  planning_server.getProcessPlanningServer().registerProcessPlanner("RasterGDebug", tesseract_planning::createDescartesGenerator(true, false));
+  planning_server->getEnvironmentCache().setCacheSize(cache_size);
 
   if (publish_environment)
-    planning_server.getEnvironmentMonitor().startPublishingEnvironment();
+    planning_server->getEnvironmentMonitor().startPublishingEnvironment();
 
   if (!monitored_namespace.empty())
-    planning_server.getEnvironmentMonitor().startMonitoringEnvironment(monitored_namespace);
+    planning_server->getEnvironmentMonitor().startMonitoringEnvironment(monitored_namespace);
+
+  if (!task_composer_config.empty())
+  {
+    tesseract_common::fs::path config(task_composer_config);
+    planning_server->getTaskComposerServer().loadConfig(config);
+  }
+
+  ros::Timer update_cache = nh.createTimer(ros::Duration(cache_refresh_rate), updateCacheCallback);
 
   ros::AsyncSpinner spinner(4);
   spinner.start();

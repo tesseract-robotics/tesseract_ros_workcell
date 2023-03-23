@@ -14,7 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tesseract_command_language REQUIRED)
-find_package(tesseract_process_managers REQUIRED)
+find_package(tesseract_task_composer REQUIRED)
+find_package(tesseract_motion_planners REQUIRED)
 find_package(tesseract_common REQUIRED)
 find_package(tesseract_collision REQUIRED)
 
@@ -25,8 +26,8 @@ catkin_package(
     tesseract_planning_server
   DEPENDS
     tesseract_command_language
-    tesseract_process_managers
-    tesseract_planning_server
+    tesseract_task_composer
+    tesseract_motion_planners
 )
 
 # Load variable for clang tidy args, compiler options and cxx version
@@ -36,7 +37,12 @@ add_executable(${PROJECT_NAME}_planning_server_node src/twc_planning_server_node
 target_link_libraries(${PROJECT_NAME}_planning_server_node PRIVATE
   tesseract::tesseract_collision_core
   tesseract::tesseract_command_language
-  tesseract::tesseract_process_managers
+  tesseract::tesseract_task_composer
+  tesseract::tesseract_motion_planners_core
+  tesseract::tesseract_motion_planners_trajopt
+  tesseract::tesseract_motion_planners_ompl
+  tesseract::tesseract_motion_planners_descartes
+  tesseract::tesseract_motion_planners_simple
   ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME}_planning_server_node PRIVATE ${TESSERACT_COMPILE_OPTIONS})
 target_clang_tidy(${PROJECT_NAME}_planning_server_node ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
